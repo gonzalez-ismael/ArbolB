@@ -18,7 +18,7 @@ public class ArbolM {
      */
     public ArbolM(int m) {
         this.m = m;
-        raiz = null;
+        this.raiz = null;
     }
     
     public int altura() {
@@ -49,7 +49,7 @@ public class ArbolM {
         }
     }
 
-    public void recorridoNivel(NodoB r, int nivel) {
+    private void recorridoNivel(NodoB r, int nivel) {
         if (r != null) {
             if (nivel == 0) {
                 r.mostrarClaves();
@@ -78,36 +78,42 @@ public class ArbolM {
         }
     }
 
-    public void recorridoPreorden(NodoB r) {
+    private void recorridoPreorden(NodoB r) {
         if (r != null) {
             int nClaves = r.getCantClaves();
             for (int i = 0; i < nClaves; i++) {
-                System.out.print(r.getClaveEn(i) + " ");
+                if(r.getClaveEn(i) != null) {
+                    System.out.print(r.getClaveEn(i) + " ");
+                }
                 recorridoPreorden(r.getHijoEn(i));
             }
             recorridoPreorden(r.getHijoEn(nClaves));
         }
     }
 
-    public void recorridoEnorden(NodoB r) {
+    private void recorridoEnorden(NodoB r) {
         if (r != null) {
             int nClaves = r.getCantClaves();
             for (int i = 0; i < nClaves; i++) {
                 recorridoEnorden(r.getHijoEn(i));
-                System.out.print(r.getClaveEn(i) + " ");
+                if(r.getClaveEn(i) != null) {
+                    System.out.print(r.getClaveEn(i) + " ");
+                }
             }
             recorridoEnorden(r.getHijoEn(nClaves));
         }
     }
 
-    public void recorridoPostorden(NodoB r) {
+    private void recorridoPostorden(NodoB r) {
         if (r != null) {
             int i = 0;
             recorridoPostorden(r.getHijoEn(i));
             int nClaves = r.getCantClaves()-1;
             while(i <= nClaves){
                 recorridoPostorden(r.getHijoEn(++i));
-                System.out.print(r.getClaveEn(nClaves) + " ");
+                if(r.getClaveEn(nClaves) != null) {
+                    System.out.print(r.getClaveEn(nClaves) + " ");
+                }
             }
         }
     }
