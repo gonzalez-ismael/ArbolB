@@ -84,7 +84,7 @@ public class ArbolB extends ArbolM {
 
     // Necesito ayuda con este algoritmo
     private void insertarPadreLleno(NodoB padre, NodoB nodoDerecho, NodoB nodoIzquierdo, int claveMediana) {
-        NodoB auxDer = padre.getHijoEn(padre.getCantClaves()-1);
+        NodoB auxDer = padre.getHijoEn(padre.getCantClaves());
         insertarPadre(padre, claveMediana);
 
         NodoB abuelo = padre.getPadre();
@@ -107,10 +107,30 @@ public class ArbolB extends ArbolM {
         System.out.println("NODO NODO DER: "+nodoDerecho.getClaveEn(0));
         System.out.println("NODO NODO IZQ: "+nodoIzquierdo.getClaveEn(0));
     }
+    
 
     /*
     
      */
+    private void insertarPadreLleno2(NodoB padre, NodoB nodoDerecho, NodoB nodoIzquierdo, int claveMediana){
+        if(padre.estaLleno()){
+            NodoB nuevoPadre = padre.getPadre();
+        }
+        
+        
+        
+
+//    si padre está lleno:
+//        claveMediana = clave
+//        hijoIzquierdoMediano = hijoIzquierdo
+//        hijoDerechoMediano = hijoDerecho
+//        nuevoPadre = padre.padre
+//        insertarClaveEnPadreConRedistribucion(nuevoPadre, claveMediana, hijoIzquierdoMediano, hijoDerechoMediano)
+//    sino:
+//        insertarClaveEnPadre(padre, clave, hijoIzquierdo, hijoDerecho)
+    }
+    
+    
     private void acomodarElementosDentroNodo(NodoB nodo, int clave) {
         int i = nodo.getCantClaves() - 1; // Se obtiene la cantidad de claves
         nodo.setClaveEn(i + 1, clave); // Agrega la clave al final del arreglo

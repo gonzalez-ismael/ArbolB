@@ -18,7 +18,7 @@ public class NodoB {
     public NodoB(int orden, int clave) {
         this.m = orden;
         this.padre = null;
-        this.claves = new Integer[m];
+        this.claves = new Integer[m + 1];
         this.claves[0] = clave;
         this.hijos = new NodoB[m + 1];
         this.cantClaves = 1;
@@ -30,7 +30,7 @@ public class NodoB {
     public NodoB(int orden) {
         this.m = orden;
         this.padre = null;
-        this.claves = new Integer[m];
+        this.claves = new Integer[m + 1];
         this.hijos = new NodoB[m + 1];
         this.cantClaves = 0;
     }
@@ -48,17 +48,17 @@ public class NodoB {
     }
 
     public boolean estaLleno() {
-        return (this.getCantClaves() == this.m - 1);
+        return (this.getCantClaves() == this.m-1);
     }
-
-    public boolean esVacio() {
-        return this == null;
+    
+    public boolean estaSemiVacio() {
+        return (this.getCantClaves() < (this.m/2));
     }
 
     public void mostrarClaves() {
-        int i = 0;
+        int i = 1;
         System.out.print("Claves del nodo: ");
-        while (i < this.getCantClaves()) {
+        while (i <= this.getCantClaves()) {
             if (this.getClaveEn(i) != null) {
                 System.out.print(this.getClaveEn(i) + " ");
             }
