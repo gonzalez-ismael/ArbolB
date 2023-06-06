@@ -94,7 +94,7 @@ public class ArbolM {
     private void recorridoEnorden(NodoB r) {
         if (r != null) {
             int nClaves = r.getCantClaves();
-            for (int i = 0; i <= nClaves; i++) {
+            for (int i = 0; i < nClaves; i++) {
                 recorridoEnorden(r.getHijoEn(i));
                 if(r.getClaveEn(i) != null) {
                     System.out.print(r.getClaveEn(i) + " ");

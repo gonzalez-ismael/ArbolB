@@ -69,11 +69,11 @@ public class ArbolB3 extends ArbolM {
         ContAux arregloAux = new ContAux(subeArriba, mediana, nuevoDerecho);
         if (nodoActual == null) {
             // envía hacia arriba la clave y su hijo derecho NULL para que se inserte en el nodo padre
-//            subeArriba = true;
+            subeArriba = true;
             mediana = clave;
             nuevoDerecho = null;
 
-            arregloAux.setSubeArriba(true);
+            arregloAux.setSubeArriba(subeArriba);
             arregloAux.setMediana(mediana);
             arregloAux.setNd(nuevoDerecho);
         } else {
@@ -86,37 +86,27 @@ public class ArbolB3 extends ArbolM {
                 throw new IlegalClaveDuplicated("Clave Duplicada");
             }
             // siempre se ejecuta
+            // Recursivividad
             arregloAux = empujar(nodoActual.getHijoEn(indiceClave), clave, mediana, nuevoDerecho);
-//            subeArriba = arregloAux.getSubeArriba();
+            subeArriba = arregloAux.getSubeArriba();
             mediana = arregloAux.getMediana();
             nuevoDerecho = arregloAux.getNd();
-
             // devuelve control; vuelve por el camino de búsqueda
             ContAux arregloAux2;
-            
-            if (!nodoActual.estaLleno()) { //cabe en el nodo, se inserta la mediana y su hijo derecho
-                subeArriba = false;
-                arregloAux.setSubeArriba(subeArriba);
-                meterNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
-            } else { //hay que dividir el nodo
-                if (nodoActual.estaLleno()) {
+
+            if (subeArriba) {
+                if (!nodoActual.estaLleno()) {
+                    subeArriba = false;
+                    arregloAux.setSubeArriba(subeArriba);
+                    meterNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
+                } else {
                     arregloAux2 = dividirNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
                     arregloAux.setMediana(arregloAux2.getMediana());
                     arregloAux.setNd(arregloAux2.getNd());
+                    subeArriba = true;
+                    arregloAux.setSubeArriba(subeArriba);
                 }
             }
-
-//            if (subeArriba) {
-//                if (nodoActual.estaLleno()) {    //hay que dividir el nodo
-//                    arregloAux2 = dividirNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
-//                    arregloAux.setMediana(arregloAux2.getMediana());
-//                    arregloAux.setNd(arregloAux2.getNd());
-//                }
-//            } else {    //cabe en el nodo, se inserta la mediana y su hijo derecho
-//                subeArriba = false;
-//                arregloAux.setSubeArriba(subeArriba);
-//                meterNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
-//            }
         }
         return arregloAux;
     }
@@ -128,9 +118,6 @@ public class ArbolB3 extends ArbolM {
         deba crecer en altura.
      */
     private ContAux dividirNodo(NodoB nodoActual, Integer mediana, NodoB nuevo, int pos) {
-        if(mediana==5){
-            System.out.println("AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
-        }
         int i, posMediana, k;
         NodoB nuevoNodo;
         k = pos;

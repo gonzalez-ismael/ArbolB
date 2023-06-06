@@ -13,7 +13,7 @@ public class main {
         ArbolB3 a = new ArbolB3(3);
         
         //VALORES FUNCIONA
-        int[] valores = {1,2,3,4,5};
+        int[] valores = {1,2,3,4,5,6,7};
 //        int[] valores = {3, 15, 25, 35, 45, 16, 17, 18, 19, 20, 21 ,22 ,23, 24};
         //VALORES DONDE FALLA
 //        int[] valores = {1,2,3,4,5,6,7};
@@ -28,10 +28,10 @@ public class main {
         }
         
 //        System.out.println(a.getRaiz().getHijoEn(0).getClaveEn(1));
-        System.out.println("");
-        System.out.println("Profundidad: ");
-        a.mostrarProfundidad(ArbolB.ENORDEN);
-        System.out.println("");
+//        System.out.println("");
+//        System.out.println("Profundidad: ");
+//        a.mostrarProfundidad(ArbolB.ENORDEN);
+//        System.out.println("");
         
         System.out.println("");
         System.out.println("Amplitud A");
