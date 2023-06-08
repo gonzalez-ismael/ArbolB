@@ -1,13 +1,11 @@
 package Excepciones;
 
 /**
- *
+ * Esta clase funciona como una excepcion personalizada para situaciones donde se ingresa una clave existente en un Árbol B.
+ * 
+ * 
  * @author Ismael
  */
-
-/*
-    Clase Excepcion para mandar mensajes de claves duplicadas.
-*/
 public class IlegalClaveDuplicada extends Exception{
     public IlegalClaveDuplicada(String mensaje) {
         super(mensaje);

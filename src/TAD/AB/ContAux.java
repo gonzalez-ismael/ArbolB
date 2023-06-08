@@ -1,22 +1,15 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package TAD.AB;
 
 /**
- *
+ * Esta clase es un mecanismo auxiliar para poder retornar mas de una variable en los distintos métodos de ArbolB.
+ * Esta clase nace como solución al uso de punteros en C++.
+ * En java solo se puede retornar un unico valor, entonces hare que se retorne un arreglo con todos los valores que usan los punteros en C++.
+ * 
  * @author Ismael
- */
-
-/*
-    Clase auxiliar para poder pasar arreglos de distintos tipos de parametros.
-    Esta clase nace como solucion al uso de punteros.
-    En java solo se puede retornar un unico valor, entonces hare que se retorne un arreglo con todos los valores que usan los punteros en C++.
  */
 public class ContAux {
 
+    //Variables privadas
     private boolean subeArriba;
     private Integer mediana;
     private NodoB nd;
