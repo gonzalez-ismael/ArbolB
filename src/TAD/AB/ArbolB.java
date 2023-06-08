@@ -1,288 +1,235 @@
 package TAD.AB;
 
+import Excepciones.IlegalClaveDuplicada;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Objects;
+
 /**
+ * Esta clase hereda de ArbolM y representa un ArbolB de orden M. Esta clase tiene 3 Métodos públicos: Insertar, Eliminar y Buscar.
  *
  * @author Ismael
  */
 public class ArbolB extends ArbolM {
 
+    /**
+     * Constructor desarrollado para crear un arbol vacio de orden m. Hace uso del constructor de la clase Heredada ArbolM.
+     *
+     * @param m es la dimension del arbol, la cantidad de ramas/hijos que tiene.
+     */
     public ArbolB(int m) {
         super(m);
     }
 
-    /*
-     * Este método inserta un dato en el arbol
-     * Se analizan dos casos: arbol vacio, y arbol con elementos.
+    /**
+     * Método público para insertar una clave.
+     *
+     * @param clave es la clave a ingresar en el árbol.
      */
-    public boolean insertarB(int clave) {
-        boolean seInserto = false;
-        if (esVacio()) { // CASO 0: Arbol Vacio
-            NodoB nuevo = new NodoB(getM(), clave); // Creamos nodo nuevo
-            setRaiz(nuevo); // Arbol seteado
-            seInserto = true;
-        } else { // CASO 1: Arbol con elementos
-            if (buscarPos(getRaiz(), clave) == -1) { // Evitamos claves repetidas
-                NodoB nodoHoja = buscarNodoB(getRaiz(), clave); // Buscamos el Nodo hoja
-                insertarElemento(nodoHoja, clave); // ingresar elemento
-                seInserto = true;
-            }
-        }
-        return seInserto;
+    public void insertar(Integer clave) {
+        this.setRaiz(insertar(this.getRaiz(), clave));
     }
 
-    /*
-     * Este metedo efectiviza la insercion de un elemento en un nodo
-     * Se analizan dos casos: Si el nodo tiene espacio o si esta lleno
+    /**
+     * Metodo privado para crear una nueva raíz si la propagación, hacia arriba, del proceso de división llega a la actual raíz (el árbol aumenta su altura).
+     *
+     * @param raiz es la raiz actual del árbol.
+     * @param clave es la clave a ingresar en el árbol.
+     * @return NodoB - es la nueva raiz.
      */
-    private void insertarElemento(NodoB nodo, int clave) {
-        if (nodo != null) { // SI NO ES VACIO
-            if (nodo.getCantClaves() < nodo.getM() - 1) { // CASO A: Nodo con espacio
-                acomodarElementosDentroNodo(nodo, clave);
-            } else { // CASO B: Nodo sin espacio
-                insertarPadre(nodo, clave); // Hay que analizar al padre
-            }
+    private NodoB insertar(NodoB raiz, Integer clave) {
+        boolean subeArriba;
+        int mediana;
+        NodoB nodoDerecha = null;
+        ContAux arregloAux = new ContAux();
+        try {
+            arregloAux = empujar(raiz, clave, 0, nodoDerecha);
+        } catch (IlegalClaveDuplicada ex) {
+            System.out.println(ex.toString());
         }
+        //Trabajo de punteros implicito en arregloAux.
+        subeArriba = arregloAux.getSubeArriba();
+        mediana = arregloAux.getMediana();
+        nodoDerecha = arregloAux.getNd();
+
+        // El árbol crece en altura por la raíz.
+        // sube una nueva clave mediana y un nuevo hijo derecho nd
+        // en la implementación se mantiene que las claves que son
+        // menores que mediana se encuentran en raiz y las mayores en nd
+        if (subeArriba) {
+            NodoB nuevaRaiz = new NodoB(this.getM());    //Nuevo Nodo
+            nuevaRaiz.setCantClaves(1);                  //Tiene una sola clave
+            nuevaRaiz.setClaveEn(1, mediana);
+            nuevaRaiz.setHijoEn(0, raiz);
+            nuevaRaiz.setHijoEn(1, nodoDerecha);
+            raiz = nuevaRaiz;
+        }
+        return raiz;
     }
 
-    /*
-     * Este metodo efectiviza la insercion de la mediana en el nodo padre
-     * Se analizan dos casos: si el nodo tiene padre o si no lo tiene
-     * Ademas en el primer caso, se anliza si dicho nodo es la raiz.
+    /**
+     * Método privado - este lo primero que hace es “bajar” por el camino de búsqueda hasta llegar a un nodo vacío A continuación, se prepara para “subir” (activa el indicador subeArriba) por las nodos del camino y realizar la inserción.
+     *
+     * @param nodoActual es el nodo actual.
+     * @param clave es la clave a ingresar.
+     * @param mediana la mediana es la clave que se encuentra en la mitad del nodo (M/2).
+     * @param nuevoDerecho es el nuevo hijo derecho del nodo actual.
+     * @return ContAux - devuelve un arreglo que contiene un booleano "subeArriba", un int "mediana" y un NodoB "nodoDerecha".
+     * @throws IlegalClaveDuplicada - es una excepcion en caso de que se intente ingresar una clave que ya este en el árbol.
      */
-    private void insertarPadre(NodoB nodoActual, int clave) {
-        Integer[] claves = obtenerArregloOrdenado(nodoActual, clave); // aux del nuevo arreglo con la clave
-        Integer claveMediana = claves[claves.length / 2]; // obtenermos la mediana del arreglo
-        nodoActual = eliminarMediana(nodoActual, claves); // eliminar mediana del nodo, con el arreglo
+    private ContAux empujar(NodoB nodoActual, Integer clave, Integer mediana, NodoB nuevoDerecho) throws IlegalClaveDuplicada {
+        boolean subeArriba = false;
+        ContAux arregloAux = new ContAux(subeArriba, mediana, nuevoDerecho);
+        if (nodoActual == null) {
+            // envía hacia arriba la clave y su hijo derecho NULL para que se inserte en el nodo padre
+            subeArriba = true;
+            mediana = clave;
+            nuevoDerecho = null;
 
-        if (nodoActual.getPadre() == null) { // CASO A: El Nodo es Raiz | el nodo no tiene padre
-
-            NodoB padre = new NodoB(nodoActual.getM(), claveMediana);// Creamos el nodo padre
-            NodoB nuevoDerecho = particionar(nodoActual); // Particionamos el nodo izquierdo
-            // Y almacenamos en el nodo derecho
-            nuevoDerecho.setPadre(padre); // seteamos al nodo nuevo con su nuevo padre
-            nodoActual.setPadre(padre); // seteamos al nodo con su nuevo padre
-
-            padre.setHijoEn(0, nodoActual); // seteamos al hijo izquierdo del padre
-            padre.setHijoEn(1, nuevoDerecho); // seteamos al hijo derecho del padre
-
-            // si este nodo era la raiz se la reemplaza por el padre
-            if (nodoActual == this.getRaiz()) {
-                this.setRaiz(padre);
-            }
-        } else { // CASO B: el nodo si tiene padre
-            NodoB padre = nodoActual.getPadre();
-            NodoB nodoDerecho = particionar(nodoActual);
-
-            if (padre.getCantClaves() < padre.getM() - 1) { // CASO B.1: el nodo padre tiene espacio
-                insertarElemento(padre, claveMediana);
-                ordenarHijosPadreInsertar(padre, claveMediana, nodoActual, nodoDerecho);
-            } else { // CASO B.2: el nodo padre NO tiene espacio
-                insertarPadreLleno(padre, nodoDerecho, nodoActual, claveMediana);
-            }
-        }
-    }
-
-    // Necesito ayuda con este algoritmo
-    private void insertarPadreLleno(NodoB padre, NodoB nodoDerecho, NodoB nodoIzquierdo, int claveMediana) {
-        NodoB auxDer = padre.getHijoEn(padre.getCantClaves());
-        insertarPadre(padre, claveMediana);
-
-        NodoB abuelo = padre.getPadre();
-        NodoB padreDer = abuelo.getHijoEn(abuelo.getCantClaves());
-
-        padreDer.setHijoEn(padre.getCantClaves() - 1, nodoDerecho); // almacena al hijo derecho en el lado izq
-        padreDer.setHijoEn(padre.getCantClaves(), auxDer); // almacena al nuevo nodo en el lado der
-
-        int i = padreDer.getM() - 1;
-        while (0 <= i) {
-            if (padreDer.getHijoEn(i) != null) {
-                padreDer.getHijoEn(i).setPadre(padreDer);
-            }
-            i--;
-        }
-
-        padre.setHijoEn(padre.getCantClaves(), nodoIzquierdo); // Setea el hijo con el nuevo nodo Der
-        padre.setHijoEn(padre.getCantClaves() + 1, null); // Elimina al hijo de la derecha
-        System.out.println("NODO AUXDER: "+auxDer.getClaveEn(0));
-        System.out.println("NODO NODO DER: "+nodoDerecho.getClaveEn(0));
-        System.out.println("NODO NODO IZQ: "+nodoIzquierdo.getClaveEn(0));
-    }
-    
-
-    /*
-    
-     */
-    private void insertarPadreLleno2(NodoB padre, NodoB nodoDerecho, NodoB nodoIzquierdo, int claveMediana){
-        if(padre.estaLleno()){
-            NodoB nuevoPadre = padre.getPadre();
-        }
-        
-        
-        
-
-//    si padre está lleno:
-//        claveMediana = clave
-//        hijoIzquierdoMediano = hijoIzquierdo
-//        hijoDerechoMediano = hijoDerecho
-//        nuevoPadre = padre.padre
-//        insertarClaveEnPadreConRedistribucion(nuevoPadre, claveMediana, hijoIzquierdoMediano, hijoDerechoMediano)
-//    sino:
-//        insertarClaveEnPadre(padre, clave, hijoIzquierdo, hijoDerecho)
-    }
-    
-    
-    private void acomodarElementosDentroNodo(NodoB nodo, int clave) {
-        int i = nodo.getCantClaves() - 1; // Se obtiene la cantidad de claves
-        nodo.setClaveEn(i + 1, clave); // Agrega la clave al final del arreglo
-
-        if (nodo.esHoja()) {
-            while ((0 <= i) && (clave < nodo.getClaveEn(i))) { // ACOMODA TODOS LOS ELEMENTOS
-                nodo.setClaveEn(i + 1, nodo.getClaveEn(i)); // Moviendo la clave desde el final
-                nodo.setClaveEn(i, clave); // Hasta su posicion
-            }
+            arregloAux.setSubeArriba(subeArriba);
+            arregloAux.setMediana(mediana);
+            arregloAux.setNd(nuevoDerecho);
         } else {
-            NodoB aux; // Variable auxiliar para desplazar hijos
-            while ((0 <= i) && (clave < nodo.getClaveEn(i))) { // ACOMODA TODOS LOS ELEMENTOS
-                nodo.setClaveEn(i + 1, nodo.getClaveEn(i)); // Moviendo la clave desde el final
-                nodo.setClaveEn(i, clave); // Hasta su posicion
-                aux = nodo.getHijoEn(i + 2); // Aux de hijo
-                nodo.setHijoEn(i + 2, nodo.getHijoEn(i + 1)); // Mueve al hijo desde el final
-                nodo.setHijoEn(i + 1, aux); // hasta su posicion
-                i--;
+            int indiceClave;
+            boolean seEncuentra;
+            AtomicInteger auxIndice = new AtomicInteger();
+            seEncuentra = buscarNodo(nodoActual, clave, auxIndice);
+            indiceClave = auxIndice.get();
+            if (seEncuentra) {
+                throw new IlegalClaveDuplicada("Clave Duplicada");
             }
-        }
-        nodo.setCantClaves(nodo.getCantClaves() + 1); // Suma 1 a la cantidad de claves
-    }
+            // siempre se ejecuta
+            // Recursivividad
+            arregloAux = empujar(nodoActual.getHijoEn(indiceClave), clave, mediana, nuevoDerecho);
+            subeArriba = arregloAux.getSubeArriba();
+            mediana = arregloAux.getMediana();
+            nuevoDerecho = arregloAux.getNd();
+            // devuelve control; vuelve por el camino de búsqueda
+            ContAux arregloAux2;
 
-    /*
-    
-     */
-    private NodoB particionar(NodoB nodoActual) {
-        int i = nodoActual.getCantClaves() - 1;
-        int j = 0;
-        // Creamos al nuevo hijo derecho
-        NodoB nuevoNodo = new NodoB(nodoActual.getM());
-
-        while (i > (nodoActual.getM() / 2) - 1) { // pasamos la mitad de los elementos
-            insertarElemento(nuevoNodo, nodoActual.getClaveEn(i)); // mayores que la mediana
-            nuevoNodo.setHijoEn(j, nodoActual.getHijoEn(i)); // seteamos al hijo izquierdo
-            nuevoNodo.setHijoEn(j + 1, nodoActual.getHijoEn(i + 1)); // setamos al hijo derecho
-            nodoActual.setHijoEn(i + 1, null); // eliminamos al hijo derecho
-            i--;
-            j++;
-        }
-
-        nodoActual.setHijoEn(i + 1, null); // eliminamos al hijo izquierdo
-        nodoActual.setCantClaves(i + 1);    // modificamos la cantidad de claves actual
-        limpiarClavesExedentes(nodoActual); // eliminamos logicamente la mitad de claves
-        return nuevoNodo;
-    }
-    
-    /*
-        Este metodo se utiliza en la particion, elimina las claves sobrantes del nodo actual
-    */
-    private void limpiarClavesExedentes(NodoB nodoActual){
-        for(int i=nodoActual.getM()/2; i<=nodoActual.getCantClaves(); i++){
-            nodoActual.setClaveEn(i, null);
-        }
-    }
-
-    /*
-     * Este metodo ordena los hijos del padre, al ingresar la mediana estos pueden
-     * quedar desordenados
-     */
-    private void ordenarHijosPadreInsertar(NodoB padre, int claveMediana, NodoB hijoIzquierdo, NodoB hijoDerecho) {
-        int posMediana = buscarPos(padre, claveMediana);
-        padre.setHijoEn(posMediana, hijoIzquierdo);
-        padre.setHijoEn(++posMediana, hijoDerecho);
-        hijoIzquierdo.setPadre(padre);
-        hijoDerecho.setPadre(padre);
-    }
-
-    /*
-     * Este metodo busca el nodo en el cual debe insertarse la clave
-     */
-    private NodoB buscarNodoB(NodoB r, int clave) {
-        if (clave > r.getClaveEn(r.getCantClaves() - 1)) {
-            if (r.getHijoEn(r.getCantClaves()) != null) {
-                return buscarNodoB(r.getHijoEn(r.getCantClaves()), clave);
-            }
-        } else {
-            for (int i = 0; i < r.getCantClaves(); i++) {
-                if (clave < r.getClaveEn(i)) {
-                    if (r.getHijoEn(i) != null) {
-                        return buscarNodoB(r.getHijoEn(i), clave);
-                    }
-                }
-            }
-        }
-        return r;
-    }
-
-    /*
-     * Este metodo retorna la posicion de una clave en un nodo,
-     * si no existe en el nodo, retorna -1
-     */
-    private int buscarPos(NodoB r, int e) {
-        if (r == null) {
-            return -1;
-        } else {
-            for (int i = 0; i < r.getCantClaves(); i++) {
-                if (e == r.getClaveEn(i)) {
-                    return i;
+            if (subeArriba) {
+                if (!nodoActual.estaLleno()) {
+                    subeArriba = false;
+                    arregloAux.setSubeArriba(subeArriba);
+                    meterNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
                 } else {
-                    if (e < r.getClaveEn(i)) {
-                        return buscarPos(r.getHijoEn(i), e);
-                    }
+                    arregloAux2 = dividirNodo(nodoActual, mediana, nuevoDerecho, indiceClave);
+                    arregloAux.setMediana(arregloAux2.getMediana());
+                    arregloAux.setNd(arregloAux2.getNd());
+                    subeArriba = true;
+                    arregloAux.setSubeArriba(subeArriba);
                 }
             }
-            return buscarPos(r.getHijoEn(r.getCantClaves()), e);
         }
+        return arregloAux;
     }
 
-    /*
-     * Este metodo agrega la mediana a un arreglo para evitar usar el arreglo de los
-     * nodos.
-     * Retorna un arreglo ordenado con la nueva clave insertada y
-     * asegura que la mediana estara en el medio del arreglo
+    /**
+     * Este método resuelve el problema de que el nodo donde se debe insertar la clave esté lleno. Virtualmente, el nodo se divide en dos y la clave mediana es enviada hacia arriba, para una re-inserción posterior en un nodo padre o bien en una nueva raíz en el caso de que el árbol deba crecer en altura.
+     *
+     * @param nodoActual es el nodo actual.
+     * @param mediana la mediana es la clave que se encuentra en la mitad del nodo (M/2).
+     * @param nuevo es el nuevo nodo.
+     * @param pos es el indice de la clave.
+     * @return ContAux - es un arreglo que contiene un int "mediana" y un NodoB "nuevo".
      */
-    private Integer[] obtenerArregloOrdenado(NodoB nodo, int data) {
-        int i = 0;
-        Integer[] claves = new Integer[nodo.getCantClaves() + 1];
-        while (i < nodo.getCantClaves()) {
-            claves[i] = nodo.getClaveEn(i);
-            i++;
+    private ContAux dividirNodo(NodoB nodoActual, Integer mediana, NodoB nuevo, int pos) {
+        int i, posMediana, k;
+        NodoB nuevoNodo;
+        k = pos;
+        //posicion de clave mediana
+        posMediana = (k <= this.getM() / 2) ? this.getM() / 2 : this.getM() / 2 + 1; //IF SIMPLE
+        nuevoNodo = new NodoB(this.getM());
+        for (i = posMediana + 1; i < this.getM(); i++) {
+            // desplazada la mitad derecha a la nueva Página, la clave mediana se queda en Página actual
+            nuevoNodo.setClaveEn(i - posMediana, nodoActual.getClaveEn(i));
+            nuevoNodo.setHijoEn(i - posMediana, nodoActual.getHijoEn(i));
         }
-        claves[i] = data;
-        i--;
-        // Arrays.sort(claves); //ordenar por quickSort - en pseudocodigo
-        while ((i >= 0) && (data < claves[i])) {
-            claves[i + 1] = claves[i];
-            claves[i] = data;
-            i--;
+        nuevoNodo.setCantClaves((this.getM() - 1) - posMediana); //Claves del nuevo nodo
+        nodoActual.setCantClaves(posMediana); //Claves en nodo original
+
+        //Inserta la clave e hijos en el nodo que corresponde
+        if (k <= this.getM() / 2) {
+            meterNodo(nodoActual, mediana, nuevo, pos); //En el nodo actual
+        } else {
+            pos = k - posMediana;
+            meterNodo(nuevoNodo, mediana, nuevo, pos); //En el nuevo nodo
         }
-        return claves;
+
+        //Extrae clave mediana del nodo origen
+        mediana = nodoActual.getClaveEn(nodoActual.getCantClaves());
+        //El primer hijo de la izq del nuevo nodo, es el hijo de la mediana del nodoActual
+        nuevoNodo.setHijoEn(0, nodoActual.getHijoEn(nodoActual.getCantClaves()));
+        nodoActual.setHijoEn(nodoActual.getCantClaves(), null);
+        nodoActual.setClaveEn(nodoActual.getCantClaves(), null); //se quita la mediana de forma real
+        nodoActual.setCantClaves(nodoActual.getCantClaves() - 1); //se quita la mediana de forma logica
+        nuevo = nuevoNodo; //devuelve el nuevo nodo
+        ContAux b = new ContAux(mediana, nuevo);
+        return b;
     }
 
-    /*
-     * Este metodo utiliza el arreglo como una variable auxiliar y para localizar la
-     * mediana
-     * Este metodo retorna el mismo nodo que se uso como parametro, pero sin la
-     * mediana
+    /**
+     * Este método inserta una clave en un nodo que tiene un número de claves menor que el máximo, 
+     * es invocado una vez que empujar() ha comprobado que hay espacio para añadir al nodo una nueva clave.
+     * 
+     * @param nodoActual es el nodo actual.
+     * @param clave es la clave a ingresar.
+     * @param hijoDerecho es el hijo derecho del nodo.
+     * @param indiceClave es el indice de la clave a ingresar.
      */
-    private NodoB eliminarMediana(NodoB nodo, Integer[] claves) {
-        int i = 0;
-        int j = 0;
-        while (i <= nodo.getCantClaves() - 1) {
-            if (j == (nodo.getM() / 2)) {
-//                 j++;
-                nodo.setClaveEn(i, claves[++j]);
-            } else {
-                nodo.setClaveEn(i, claves[j]);
+    private void meterNodo(NodoB nodoActual, Integer clave, NodoB hijoDerecho, int indiceClave) {
+        //Desplza a la derecha los elementos para hacer un hueco
+        for (int i = nodoActual.getCantClaves(); i >= indiceClave + 1; i--) {
+            nodoActual.setClaveEn(i + 1, nodoActual.getClaveEn(i));
+            nodoActual.setHijoEn(i + 1, nodoActual.getHijoEn(i));
+        }
+        // pone la clave y el hijo derecho en la posicion siguiente (indiceClave+1)
+        nodoActual.setClaveEn(indiceClave + 1, clave);
+        nodoActual.setHijoEn(indiceClave + 1, hijoDerecho);
+        // incrementa el contador de claves almacenadas
+        nodoActual.setCantClaves(nodoActual.getCantClaves() + 1);
+    }
+
+    /**
+     * El método devuelve true si encuentra la clave en el árbol - Además, en el argumento k se obtiene
+     * la posición que ocupa la clave en el nodo, o bien el hijo por donde continuar el proceso de búsqueda.
+     * 
+     * @param nodoActual es el nodo actual.
+     * @param clave es la clave a buscar.
+     * @param pos es la posicion de la clave. Se utiliza AtomicInteger para poder modificar el indice.
+     * @return boolean - retorna "verdadero" en caso de encontrar la clave, y "falso" en caso contrario.
+     */
+    private boolean buscarNodo(NodoB nodoActual, Integer clave, AtomicInteger pos) {
+        int index;
+        boolean encontrado;
+        if (clave < nodoActual.getClaveEn(1)) {
+            encontrado = false;
+            index = 0;
+        } else { //orden descendente
+            index = nodoActual.getCantClaves();
+            while (clave < nodoActual.getClaveEn(index) && (index > 1)) {
+                index--;
             }
-            j++;
-            i++;
+            encontrado = (Objects.equals(clave, nodoActual.getClaveEn(index)));
         }
-        return nodo;
+        pos.set(index);
+        return encontrado;
     }
+    
+    public NodoB buscar(Integer clave, AtomicInteger pos) {
+        return buscar(this.getRaiz(), clave, pos);
+    }
+
+    private NodoB buscar(NodoB nodoActual, Integer clave, AtomicInteger pos) {
+        if (nodoActual == null) {
+            return null;
+        } else {
+            boolean encontrado = buscarNodo(nodoActual, clave, pos);
+            if (encontrado) {
+                return nodoActual;
+            } else {
+                return buscar(nodoActual.getHijoEn(pos.get()), clave, pos);
+            }
+        }
+    }
+
 }
