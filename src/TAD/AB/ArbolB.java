@@ -1,6 +1,7 @@
 package TAD.AB;
 
-import Excepciones.IlegalClaveDuplicada;
+import Excepciones.ClaveDuplicadaExcepcion;
+import Excepciones.ClaveInexistenteExcepcion;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Objects;
 
@@ -26,7 +27,11 @@ public class ArbolB extends ArbolM {
      * @param clave es la clave a ingresar en el árbol.
      */
     public void insertar(Integer clave) {
-        this.setRaiz(insertar(this.getRaiz(), clave));
+        try {
+            this.setRaiz(insertar(this.getRaiz(), clave));
+        } catch (ClaveDuplicadaExcepcion ex) {
+            System.out.println(ex.toString());
+        }
     }
 
     /**
@@ -36,16 +41,12 @@ public class ArbolB extends ArbolM {
      * @param clave es la clave a ingresar en el árbol.
      * @return NodoB - es la nueva raiz.
      */
-    private NodoB insertar(NodoB raiz, Integer clave) {
+    private NodoB insertar(NodoB raiz, Integer clave) throws ClaveDuplicadaExcepcion {
         boolean subeArriba;
         int mediana;
         NodoB nodoDerecha = null;
-        ContAux arregloAux = new ContAux();
-        try {
-            arregloAux = empujar(raiz, clave, 0, nodoDerecha);
-        } catch (IlegalClaveDuplicada ex) {
-            System.out.println(ex.toString());
-        }
+        ContAux arregloAux;
+        arregloAux = empujar(raiz, clave, 0, nodoDerecha);
         //Trabajo de punteros implicito en arregloAux.
         subeArriba = arregloAux.getSubeArriba();
         mediana = arregloAux.getMediana();
@@ -62,6 +63,7 @@ public class ArbolB extends ArbolM {
             nuevaRaiz.setHijoEn(0, raiz);
             nuevaRaiz.setHijoEn(1, nodoDerecha);
             raiz = nuevaRaiz;
+            actualizarPadres(raiz);
         }
         return raiz;
     }
@@ -74,9 +76,9 @@ public class ArbolB extends ArbolM {
      * @param mediana la mediana es la clave que se encuentra en la mitad del nodo (M/2).
      * @param nuevoDerecho es el nuevo hijo derecho del nodo actual.
      * @return ContAux - devuelve un arreglo que contiene un booleano "subeArriba", un int "mediana" y un NodoB "nodoDerecha".
-     * @throws IlegalClaveDuplicada - es una excepcion en caso de que se intente ingresar una clave que ya este en el árbol.
+     * @throws ClaveDuplicadaExcepcion - es una excepcion en caso de que se intente ingresar una clave que ya este en el árbol.
      */
-    private ContAux empujar(NodoB nodoActual, Integer clave, Integer mediana, NodoB nuevoDerecho) throws IlegalClaveDuplicada {
+    private ContAux empujar(NodoB nodoActual, Integer clave, Integer mediana, NodoB nuevoDerecho) throws ClaveDuplicadaExcepcion {
         boolean subeArriba = false;
         ContAux arregloAux = new ContAux(subeArriba, mediana, nuevoDerecho);
         if (nodoActual == null) {
@@ -92,13 +94,12 @@ public class ArbolB extends ArbolM {
             int indiceClave;
             boolean seEncuentra;
             AtomicInteger auxIndice = new AtomicInteger();
-            seEncuentra = buscarNodo(nodoActual, clave, auxIndice);
+            seEncuentra = buscarClave(nodoActual, clave, auxIndice);
             indiceClave = auxIndice.get();
             if (seEncuentra) {
-                throw new IlegalClaveDuplicada("Clave Duplicada");
+                throw new ClaveDuplicadaExcepcion("Clave Duplicada");
             }
-            // siempre se ejecuta
-            // Recursivividad
+            // siempre se ejecuta // Recursivividad
             arregloAux = empujar(nodoActual.getHijoEn(indiceClave), clave, mediana, nuevoDerecho);
             subeArriba = arregloAux.getSubeArriba();
             mediana = arregloAux.getMediana();
@@ -134,11 +135,10 @@ public class ArbolB extends ArbolM {
      */
     private ContAux dividirNodo(NodoB nodoActual, Integer mediana, NodoB nuevo, int pos) {
         int i, posMediana, k;
-        NodoB nuevoNodo;
+        NodoB nuevoNodo = new NodoB(this.getM());
         k = pos;
         //posicion de clave mediana
         posMediana = (k <= this.getM() / 2) ? this.getM() / 2 : this.getM() / 2 + 1; //IF SIMPLE
-        nuevoNodo = new NodoB(this.getM());
         for (i = posMediana + 1; i < this.getM(); i++) {
             // desplazada la mitad derecha a la nueva Página, la clave mediana se queda en Página actual
             nuevoNodo.setClaveEn(i - posMediana, nodoActual.getClaveEn(i));
@@ -168,9 +168,8 @@ public class ArbolB extends ArbolM {
     }
 
     /**
-     * Este método inserta una clave en un nodo que tiene un número de claves menor que el máximo, 
-     * es invocado una vez que empujar() ha comprobado que hay espacio para añadir al nodo una nueva clave.
-     * 
+     * Este método inserta una clave en un nodo que tiene un número de claves menor que el máximo, es invocado una vez que empujar() ha comprobado que hay espacio para añadir al nodo una nueva clave.
+     *
      * @param nodoActual es el nodo actual.
      * @param clave es la clave a ingresar.
      * @param hijoDerecho es el hijo derecho del nodo.
@@ -189,16 +188,174 @@ public class ArbolB extends ArbolM {
         nodoActual.setCantClaves(nodoActual.getCantClaves() + 1);
     }
 
+    public void eliminar(Integer clave) {
+        try {
+            this.setRaiz(eliminar(this.getRaiz(), clave));
+            actualizarPadres(this.getRaiz());
+        } catch (ClaveInexistenteExcepcion ex) {
+            System.out.println(ex.toString());
+        }
+    }
+
+    private NodoB eliminar(NodoB nodo, Integer clave) throws ClaveInexistenteExcepcion {
+        if (nodo != null) {
+            AtomicInteger indexClave = new AtomicInteger();
+            NodoB nodoEliminar = buscarNodo(nodo, clave, indexClave);
+            if (nodoEliminar == null) {
+                throw new ClaveInexistenteExcepcion("Clave Inexistente");
+            }
+
+            if (!nodoEliminar.esHoja()) {   //NODO INTERNO
+                Integer claveSustituta = buscarMayorMenor(nodoEliminar, clave, indexClave);
+//                Integer claveSustituta = buscarMenorMayor(nodoEliminar,clave,auxIndice);
+//                System.out.println("clave: "+claveSustituta);
+                nodoEliminar.setClaveEn(indexClave.get(), claveSustituta);
+                eliminar(nodoEliminar.getHijoEn(indexClave.get() - 1), claveSustituta);
+            } else {                               //NODO HOJA
+                if (nodoEliminar.getCantClaves() > nodoEliminar.getM() / 2) { //Nodo con mas de M/2 claves
+                    eliminarNodoSupresion(nodoEliminar, clave, indexClave);
+                } else { //NODO CON M/2 claves
+                    eliminarNodoSupresion(nodoEliminar, clave, indexClave);
+                    AtomicInteger indiceHermano = new AtomicInteger();
+                    boolean prestamo = buscarHermano(nodoEliminar, indiceHermano);
+                    restaurar(nodoEliminar.getPadre(), prestamo, indiceHermano);
+                }
+            }
+        }
+        return nodo;
+    }
+
+    private void eliminarNodoSupresion(NodoB nodo, Integer clave, AtomicInteger indice) {
+        for (int i = indice.get(); i <= nodo.getCantClaves(); i++) {
+            nodo.setClaveEn(i, nodo.getClaveEn(i + 1));
+            nodo.setHijoEn(i, nodo.getHijoEn(i + 1));
+        }
+        nodo.setCantClaves(nodo.getCantClaves() - 1);
+    }
+
+    private void restaurar(NodoB padre, boolean prestamo, AtomicInteger indiceHermano) {
+        if (prestamo) {
+            //desdeIzq()
+            //desdeDer()
+        } else {
+            //UNIR
+//            merge();
+            if (padre.getCantClaves() < padre.getM() / 2) {
+                AtomicInteger indiceHermano2 = new AtomicInteger();
+                boolean prestamo2 = buscarHermano(padre, indiceHermano2);
+                restaurar(padre.getPadre(), prestamo2, indiceHermano2);
+            }
+
+        }
+    }
+
+    private boolean buscarHermano(NodoB nodo, AtomicInteger index) {
+        boolean existeNodo = false;
+        NodoB padre = nodo.getPadre();
+        for (int i = 0; i < padre.getCantClaves() && existeNodo == false; i++) {
+            if (padre.getHijoEn(i).getCantClaves() > padre.getM() / 2) {
+                existeNodo = true;
+                index.set(i);
+            }
+        }
+        return existeNodo;
+    }
+
+    private int buscarMayorMenor(NodoB nodo, Integer clave, AtomicInteger indice) {
+        //UNO A LA IZQUIERDA
+        NodoB izquierda = nodo.getHijoEn(indice.get() - 1);
+        //FULL DERECHA
+        while (!izquierda.esHoja()) {
+            izquierda = izquierda.getHijoEn(izquierda.getCantClaves());
+        }
+        return izquierda.getClaveEn(izquierda.getCantClaves());
+    }
+
+    private int buscarMenorMayor(NodoB nodo, Integer clave, AtomicInteger indice) {
+        //UNO A LA DERECHA
+        NodoB derecha = nodo.getHijoEn(indice.get());
+        //FULL IZQUIERDA
+        while (!derecha.esHoja()) {
+            derecha = derecha.getHijoEn(0);
+        }
+        return derecha.getClaveEn(1);
+    }
+
+    //Actualizar el padre de cada hijo del nodo actual
+    public void actualizarPadres(NodoB nodo) {
+        for (int i = 0; i < nodo.getCantClaves() + 1; i++) {
+            NodoB hijo = nodo.getHijoEn(i);
+            if (hijo != null) {
+                hijo.setPadre(nodo);
+                actualizarPadres(hijo); // Llamada recursiva para el siguiente nivel del árbol
+            }
+        }
+    }
+
+    // Java Code
+    // Deletes value from the node
+    public NodoB del(int val, NodoB root) {
+        NodoB temp;
+        if (!delhelp(val, root)) {
+            System.out.println(
+                    String.format("Value %d not found.", val));
+        } else {
+            if (root.count == 0) {
+                temp = root;
+                root = root.child[0];
+                temp = null;
+            }
+        }
+        return root;
+    }
+
+    // GFG
+// Java Code
+// Helper function for del()
+    public boolean delhelp(int val, NodoB root) {
+        AtomicInteger i = new AtomicInteger();
+        boolean flag;
+        if (root == null) {
+            return 0;
+        } else {
+            // Again searches for the node
+            flag = searchnode(val, root, i);
+            // if flag is true
+            if (flag) {
+                if (root.getHijoEn(i.get()-1) == null) {
+                    clear(root, i);
+                } else {
+                    copysucc(root, i);
+                    // delhelp() is called recursively
+                    flag = delhelp(root.value[i], root.child[i]);
+                    if (flag == 0) {
+                        System.out.println(
+                                String.format("Value %d not found.",
+                                        root.value[i]));
+                    }
+                }
+            } else {
+                // Recursion
+                flag = delhelp(val, root.getHijoEn(i.get()));
+            }
+            if (root.child[i] != null) {
+                if (root.child[i].count < MIN) {
+                    restore(root, i);
+                }
+            }
+            return flag;
+        }
+    }
+
     /**
-     * El método devuelve true si encuentra la clave en el árbol - Además, en el argumento k se obtiene
-     * la posición que ocupa la clave en el nodo, o bien el hijo por donde continuar el proceso de búsqueda.
-     * 
+     * El método devuelve true si encuentra la clave en el árbol - Además, en el argumento k se obtiene la posición que ocupa la clave en el nodo, o bien el hijo por donde continuar el proceso de búsqueda.
+     *
      * @param nodoActual es el nodo actual.
      * @param clave es la clave a buscar.
      * @param pos es la posicion de la clave. Se utiliza AtomicInteger para poder modificar el indice.
      * @return boolean - retorna "verdadero" en caso de encontrar la clave, y "falso" en caso contrario.
      */
-    private boolean buscarNodo(NodoB nodoActual, Integer clave, AtomicInteger pos) {
+    private boolean buscarClave(NodoB nodoActual, Integer clave, AtomicInteger pos) {
         int index;
         boolean encontrado;
         if (clave < nodoActual.getClaveEn(1)) {
@@ -214,22 +371,40 @@ public class ArbolB extends ArbolM {
         pos.set(index);
         return encontrado;
     }
-    
-    public NodoB buscar(Integer clave, AtomicInteger pos) {
-        return buscar(this.getRaiz(), clave, pos);
+
+    public NodoB buscarNodo(Integer clave, AtomicInteger pos) {
+        return buscarNodo(this.getRaiz(), clave, pos);
     }
 
-    private NodoB buscar(NodoB nodoActual, Integer clave, AtomicInteger pos) {
+    private NodoB buscarNodo(NodoB nodoActual, Integer clave, AtomicInteger pos) {
         if (nodoActual == null) {
             return null;
         } else {
-            boolean encontrado = buscarNodo(nodoActual, clave, pos);
+            boolean encontrado = buscarClave(nodoActual, clave, pos);
             if (encontrado) {
                 return nodoActual;
             } else {
-                return buscar(nodoActual.getHijoEn(pos.get()), clave, pos);
+                return buscarNodo(nodoActual.getHijoEn(pos.get()), clave, pos);
             }
         }
     }
 
+    public boolean searchnode(Integer val, NodoB n, AtomicInteger pos) {
+        // if val is less than node.value[1]
+        if (val < n.getClaveEn(1)) {
+            pos.set(0);
+            return false;
+        } // if the val is greater
+        else {
+            pos.set(n.getCantClaves());
+
+            // check in the child array
+            // for correct position
+            while ((val < n.getClaveEn(pos.get())) && pos.get() > 1) {
+                pos.set(pos.get()-1);
+            }
+
+            return Objects.equals(val, n.getClaveEn(pos.get()));
+        }
+    }
 }

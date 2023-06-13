@@ -11,6 +11,7 @@ public class NodoB {
     private int m;                  //cantidad de hijos = orden
     private Integer[] claves;       //arreglo de claves
     private NodoB[] hijos;          //arreglo de hijos
+    private NodoB padre;            //padre del nodo
     private int cantClaves;         //cantidad de claves
 
     /**
@@ -24,6 +25,7 @@ public class NodoB {
         this.claves = new Integer[m + 1];
         this.claves[0] = clave;
         this.hijos = new NodoB[m + 1];
+        this.padre = null;
         this.cantClaves = 1;
     }
 
@@ -36,6 +38,7 @@ public class NodoB {
         this.m = orden;
         this.claves = new Integer[m + 1];
         this.hijos = new NodoB[m + 1];
+        this.padre = null;
         this.cantClaves = 0;
     }
 
@@ -138,6 +141,14 @@ public class NodoB {
         this.hijos[pos] = nodo;
     }
 
+    public NodoB getPadre() {
+        return padre;
+    }
+
+    public void setPadre(NodoB padre) {
+        this.padre = padre;
+    }
+    
     public int getCantClaves() {
         return cantClaves;
     }
