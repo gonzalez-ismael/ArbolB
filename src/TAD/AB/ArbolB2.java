@@ -1,159 +1,201 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package TAD.AB;
+
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
  * @author Ismael
  */
-public class ArbolB2 extends ArbolM {
-
-    private final int NO_EXISTE = -1;
-
-    public ArbolB2(int m) {
-        super(m);
-    }
-
-    /*
-        Este método inserta un dato en el arbol
-        Se analizan dos casos: arbol vacio, y arbol con elementos.
-     */
-    public boolean insertarB(int clave) {
-        boolean seInserto = false;
-        if (esVacio()) {                                        //CASO 0: Arbol Vacio
-            NodoB nuevo = new NodoB(getM(), clave);             //Creamos nodo nuevo
-            setRaiz(nuevo);                                     //Arbol seteado
-            seInserto = true;
-        } else {                                                        //CASO 1: Arbol con elementos
-            if (!existeClave(this.getRaiz(), clave)) {                  //Evitamos claves repetidas
-                NodoB nodoActual = buscarNodoB(this.getRaiz(), clave);
-                if (!nodoActual.estaLleno()) {                          //Si la hoja contiene menos de m-1 claves, insertar en hoja
-                    insertarEnHoja(nodoActual, clave);
-                    seInserto = true;
-                } else {                                                //Sino, agregar la clave, subir la mediana y dividir los nodos
-                    insertarEnHoja(nodoActual, clave);
-                    partirNodo(nodoActual);
-                }
-            }
-        }
-        return seInserto;
-    }
-
-    /*
-        Este metodo retorna el indice de una clave en un nodo, si no existe en el nodo, retorna -1
-     */
-    private int buscarIndice(int e, NodoB r) {
-        int indice = 0;
-        while (indice < r.getCantClaves() && e > r.getClaveEn(indice)) {
-            indice++;
-        }
-        return indice;
-    }
-
-    /*
-    Este metodo busca el nodo en el cual debe insertarse la clave
-     */
-    private NodoB buscarNodoB(NodoB r, int clave) {
-        if (clave > r.getClaveEn(r.getCantClaves() - 1)) {
-            if (r.getHijoEn(r.getCantClaves()) != null) {
-                return buscarNodoB(r.getHijoEn(r.getCantClaves()), clave);
-            }
+public class ArbolB2 {
+    // Java Code
+    // Deletes value from the node
+    public NodoB del(int val, NodoB root) {
+        NodoB temp;
+        if (!delhelp(val, root)) {
+            System.out.println(
+                    String.format("Value %d not found.", val));
         } else {
-            for (int i = 0; i < r.getCantClaves(); i++) {
-                if (clave < r.getClaveEn(i)) {
-                    if (r.getHijoEn(i) != null) {
-                        return buscarNodoB(r.getHijoEn(i), clave);
-                    }
-                }
+            if (root.getCantClaves() == 0) {
+                temp = root;
+                root = root.getHijoEn(0);
+                temp = null;
             }
         }
-        return r;
+        return root;
     }
 
-    /*
-        Este metodo retorna la existencia de una clave en el arbol. True si existe, false si no.
-     */
-    private boolean existeClave(NodoB r, int e) {
-        if (r == null) {
+    // GFG
+// Java Code
+// Helper function for del()
+    private boolean delhelp(int val, NodoB root) {
+        AtomicInteger i = new AtomicInteger();
+        boolean flag;
+        if (root == null) {
             return false;
         } else {
-            for (int i = 0; i < r.getCantClaves(); i++) {
-                if (e == r.getClaveEn(i)) {
-                    return true;
+            // Again searches for the node
+            flag = searchnode(val, root, i);
+            // if flag is true
+            if (flag) {
+                if (root.getHijoEn(i.get() - 1) == null) {
+                    clear(root, i.get());
                 } else {
-                    if (e < r.getClaveEn(i)) {
-                        return existeClave(r.getHijoEn(i), e);
+                    copysucc(root, i.get());
+                    // delhelp() is called recursively
+                    flag = delhelp(root.getClaveEn(i.get()), root.getHijoEn(i.get()));
+                    if (flag == false) {
+                        System.out.println(String.format("Value %d not found.", root.getClaveEn(i.get())));
+                    }
+                }
+            } else {
+                // Recursion
+                flag = delhelp(val, root.getHijoEn(i.get()));
+            }
+            if (root.getHijoEn(i.get()) != null) {
+                if (root.getHijoEn(i.get()).getCantClaves() < root.getM() / 2) {
+                    restore(root, i.get());
+                }
+            }
+            return flag;
+        }
+    }
+
+    // GFG Java Code
+    // Removes the value from the
+    // node and adjusts the values
+    public static void clear(NodoB m, int k) {
+        for (int i = k + 1; i <= m.getCantClaves(); i++) {
+            m.setClaveEn(i - 1, m.getClaveEn(i));
+            m.setHijoEn(i - 1, m.getHijoEn(i));
+        }
+        m.setCantClaves(m.getCantClaves() - 1);
+    }
+
+    // Copies the successor of the
+    // value that is to be deleted
+    public static void copysucc(NodoB m, int i) {
+        NodoB temp = m.getHijoEn(i);
+        while (temp.getHijoEn(0) != null) {
+            temp = temp.getHijoEn(0);
+        }
+        m.setClaveEn(i, m.getClaveEn(0));
+    }
+
+    // Adjusts the node
+    public static void restore(NodoB m, int i) {
+        if (i == 0) {
+            if (m.getHijoEn(1).getCantClaves() > m.getM() / 2) {
+                leftshift(m, 1);
+            } else {
+                merge(m, 1);
+            }
+        } else {
+            if (i == m.getCantClaves()) {
+                if (m.getHijoEn(i - 1).getCantClaves() > m.getM() / 2) {
+                    rightshift(m, i);
+                } else {
+                    merge(m, i);
+                }
+            } else {
+                if (m.getHijoEn(i - 1).getCantClaves() > m.getM() / 2) {
+                    rightshift(m, i);
+                } else {
+                    if (m.getHijoEn(i + 1).getCantClaves() > m.getM() / 2) {
+                        leftshift(m, i + 1);
+                    } else {
+                        merge(m, i);
                     }
                 }
             }
-            return existeClave(r.getHijoEn(r.getCantClaves()), e);
         }
     }
 
-    // Función para dividir un nodo lleno en un árbol B
-    private void partirNodo(NodoB nodo) {
-        NodoB nodoPadre = nodo.getPadre();
-        int mediana = nodo.getClaveEn(nodo.getCantClaves() / 2);
-        // Crear un nuevo nodo y transferir las claves e hijos
-        System.out.println("NUEVO NODO");
-        NodoB nuevoNodo = new NodoB(this.getM());
-        nuevoNodo.setCantClaves(nodo.getCantClaves() - mediana-1);
-//        nuevoNodo.setClaves(transferirClaves(nodo, mediana, nodo.getCantClaves()-1));
-//        nuevoNodo.setHijos(trasnferirHijos(nodo, mediana + 1, nodo.getCantHijos()));
+    // Java Code
+    // Adjusts the values and children
+    // while shifting the value from
+    // parent to right child
+    private static void rightshift(NodoB m, int k) {
+        NodoB temp = m.getHijoEn(k);
+        // Copying the nodes
+        for (int i = temp.getCantClaves(); i > 0; i--) {
+            temp.setClaveEn(i + 1, temp.getClaveEn(i));
+            temp.setHijoEn(i + 1, temp.getHijoEn(i));
+        }
+        temp.setHijoEn(1, temp.getHijoEn(0));
+        temp.setCantClaves(temp.getCantClaves() + 1);
+        temp.setClaveEn(1, k);
+        
+        temp = m.getHijoEn(k - 1);
+        m.setClaveEn(k, temp.getClaveEn(temp.getCantClaves()));
+        m.getHijoEn(k).setHijoEn(0, temp.getHijoEn(temp.getCantClaves()));
+        temp.setCantClaves(temp.getCantClaves() - 1);
+    }
 
-        System.out.println("NODO");
-        nodo.setCantClaves(mediana);
-//        nodo.setClaves(transferirClaves(nodo, 0, mediana-2));
-//        nodo.setHijos(trasnferirHijos(nodo, 0, mediana-2));
-
-        // Insertar la mediana en el nodo padre
-        if (nodo == this.getRaiz()) {                           //Crear una nueva raíz si el nodoActual era la raíz
-            NodoB nuevaRaiz = new NodoB(this.getM(), mediana);
-            nuevaRaiz.setHijoEn(0, nodo);
-            nuevaRaiz.setHijoEn(1, nuevoNodo);
-            nodo.setPadre(nuevaRaiz);
-            nuevoNodo.setPadre(nuevaRaiz);
-            this.setRaiz(nuevaRaiz);
-        } else {                                                //Insertar en el padre, actualizar esto con los hijos
-            insertarEnHoja(nodoPadre, mediana);
+    // Adjusts the values and children
+    // while shifting the value from
+    // parent to left child
+    private static void leftshift(NodoB m, int k) {
+        NodoB temp = m.getHijoEn(k - 1);
+        temp.setCantClaves(temp.getCantClaves() + 1);
+        temp.setClaveEn(temp.getCantClaves(), m.getClaveEn(k));
+        temp.setHijoEn(temp.getCantClaves(), m.getHijoEn(k).getHijoEn(0));
+        
+        temp = m.getHijoEn(k);
+        m.setClaveEn(k, temp.getClaveEn(1));
+        temp.setHijoEn(0, temp.getHijoEn(1));
+        temp.setCantClaves(temp.getCantClaves() - 1);
+        
+        for (int i = 1; i <= temp.getCantClaves(); i++) {
+            temp.setClaveEn(i, temp.getClaveEn(i + 1));
+            temp.setHijoEn(i, temp.getHijoEn(i + 1));
         }
     }
-
-    /*
-        Función para insertar una clave en una hoja del árbol B
-     */
-    private void insertarEnHoja(NodoB nodo, int clave) {
-        int indice = buscarIndice(clave, nodo);
-//        System.out.println("La clave, " + clave + " en el indice: " + indice);
-        moverClaves(nodo, indice, nodo.getCantClaves());
-        nodo.setClaveEn(indice, clave);
-        nodo.setCantClaves(nodo.getCantClaves() + 1);
-    }
-
-    private NodoB[] trasnferirHijos(NodoB nodoFuente, int indiceInicio, int indiceFin) {
-        NodoB[] hijos = new NodoB[nodoFuente.getM() + 1];
-        for (int i = 0; i < (indiceFin - indiceInicio); i++) {
-            hijos[i] = nodoFuente.getHijoEn(indiceInicio + i);
-            nodoFuente.setHijoEn(indiceInicio + i, null);
+    
+    private static void merge(NodoB m, int k) {
+        int i;
+        NodoB temp1, temp2;
+        
+        temp1 = m.getHijoEn(k);
+        temp2 = m.getHijoEn(k - 1);
+        temp2.setCantClaves(temp2.getCantClaves() + 1);
+        temp2.setClaveEn(temp2.getCantClaves(), m.getClaveEn(k));
+        temp2.setHijoEn(temp2.getCantClaves(), m.getHijoEn(0));
+        
+        for (i = 0; i <= temp1.getCantClaves(); i++) {
+            temp2.setCantClaves(temp2.getCantClaves() + 1);
+            temp2.setClaveEn(temp2.getCantClaves(), temp1.getClaveEn(i));
+            temp2.setHijoEn(temp2.getCantClaves(), temp1.getHijoEn(i));
         }
-        return hijos;
-    }
-
-    private int[] transferirClaves(NodoB nodoFuente, int indiceInicio, int indiceFin) {
-        int[] claves = new int[nodoFuente.getM()];
-        for (int i = 0; i <= (indiceFin - indiceInicio); i++) {
-            claves[i] = nodoFuente.getClaveEn(indiceInicio + i);
-            nodoFuente.setClaveEn(indiceInicio + i, -1);
+        
+        for (i = k; i < m.getCantClaves(); i++) {
+            m.setClaveEn(i, m.getClaveEn(i + 1));
+            m.setHijoEn(i, m.getHijoEn(i + 1));
         }
-        return claves;
+        m.setCantClaves(m.getCantClaves()-1);
     }
+    
+    public boolean searchnode(Integer val, NodoB n, AtomicInteger pos) {
+        // if val is less than node.value[1]
+        if (val < n.getClaveEn(1)) {
+            pos.set(0);
+            return false;
+        } // if the val is greater
+        else {
+            pos.set(n.getCantClaves());
 
-    /*
-        Desplaza las claves 1 a la derecha para agregar una nueva clave en el nodo
-     */
-    private void moverClaves(NodoB nodo, int indiceInicio, int indiceFin) {
-//        System.out.println("Valores inicio: "+indiceInicio+" Valores fin: "+indiceFin);
-        for (int i = indiceFin; i > indiceInicio; i--) {
-            nodo.setClaveEn(i, nodo.getClaveEn(i - 1));
+            // check in the child array
+            // for correct position
+            while ((val < n.getClaveEn(pos.get())) && pos.get() > 1) {
+                pos.set(pos.get() - 1);
+            }
+            
+            return Objects.equals(val, n.getClaveEn(pos.get()));
         }
     }
-
 }

@@ -69,6 +69,15 @@ public class NodoB {
     }
 
     /**
+     * Método que devuelve si un nodo esta por debajo del minimo de claves o no. El mínimo es de M/2 claves.
+     *
+     * @return boolean - devuelve "VERDADERO" si esta por debajo del minimo de claves, caso contrario "FALSO".
+     */
+    public boolean underKeys() {
+        return (this.getCantClaves() < (this.m / 2));
+    }
+
+    /**
      * Método para mostrar las claves de un nodo. El nodo empieza en 1 porque se omite la primera posición.
      */
     public void mostrarClaves() {
@@ -148,7 +157,7 @@ public class NodoB {
     public void setPadre(NodoB padre) {
         this.padre = padre;
     }
-    
+
     public int getCantClaves() {
         return cantClaves;
     }

@@ -86,7 +86,7 @@ public class ArbolB extends ArbolM {
             subeArriba = true;
             mediana = clave;
             nuevoDerecho = null;
-
+            
             arregloAux.setSubeArriba(subeArriba);
             arregloAux.setMediana(mediana);
             arregloAux.setNd(nuevoDerecho);
@@ -106,7 +106,7 @@ public class ArbolB extends ArbolM {
             nuevoDerecho = arregloAux.getNd();
             // devuelve control; vuelve por el camino de búsqueda
             ContAux arregloAux2;
-
+            
             if (subeArriba) {
                 if (!nodoActual.estaLleno()) {
                     subeArriba = false;
@@ -187,7 +187,7 @@ public class ArbolB extends ArbolM {
         // incrementa el contador de claves almacenadas
         nodoActual.setCantClaves(nodoActual.getCantClaves() + 1);
     }
-
+    
     public void eliminar(Integer clave) {
         try {
             this.setRaiz(eliminar(this.getRaiz(), clave));
@@ -196,7 +196,7 @@ public class ArbolB extends ArbolM {
             System.out.println(ex.toString());
         }
     }
-
+    
     private NodoB eliminar(NodoB nodo, Integer clave) throws ClaveInexistenteExcepcion {
         if (nodo != null) {
             AtomicInteger indexClave = new AtomicInteger();
@@ -204,63 +204,184 @@ public class ArbolB extends ArbolM {
             if (nodoEliminar == null) {
                 throw new ClaveInexistenteExcepcion("Clave Inexistente");
             }
-
-            if (!nodoEliminar.esHoja()) {   //NODO INTERNO
+            
+            if (nodoEliminar.esHoja()) {
+                nodoEliminar = eliminarNodoSupresion(nodoEliminar, indexClave);
+            } else {
                 Integer claveSustituta = buscarMayorMenor(nodoEliminar, clave, indexClave);
 //                Integer claveSustituta = buscarMenorMayor(nodoEliminar,clave,auxIndice);
-//                System.out.println("clave: "+claveSustituta);
                 nodoEliminar.setClaveEn(indexClave.get(), claveSustituta);
                 eliminar(nodoEliminar.getHijoEn(indexClave.get() - 1), claveSustituta);
-            } else {                               //NODO HOJA
-                if (nodoEliminar.getCantClaves() > nodoEliminar.getM() / 2) { //Nodo con mas de M/2 claves
-                    eliminarNodoSupresion(nodoEliminar, clave, indexClave);
-                } else { //NODO CON M/2 claves
-                    eliminarNodoSupresion(nodoEliminar, clave, indexClave);
-                    AtomicInteger indiceHermano = new AtomicInteger();
-                    boolean prestamo = buscarHermano(nodoEliminar, indiceHermano);
-                    restaurar(nodoEliminar.getPadre(), prestamo, indiceHermano);
-                }
             }
+            
+            verificarRestaurar(nodoEliminar);
+
+//            if (!nodoEliminar.esHoja()) {   //NODO INTERNO
+//                Integer claveSustituta = buscarMayorMenor(nodoEliminar, clave, indexClave);
+////                Integer claveSustituta = buscarMenorMayor(nodoEliminar,clave,auxIndice);
+////                System.out.println("clave: "+claveSustituta);
+//                nodoEliminar.setClaveEn(indexClave.get(), claveSustituta);
+//                eliminar(nodoEliminar.getHijoEn(indexClave.get() - 1), claveSustituta);
+//            } else {                               //NODO HOJA
+//                if (nodoEliminar.getCantClaves() > nodoEliminar.getM() / 2) { //Nodo con mas de M/2 claves
+//                    eliminarNodoSupresion(nodoEliminar, indexClave);
+//                } else { //NODO CON M/2 claves
+//                    eliminarNodoSupresion(nodoEliminar, indexClave);
+//                    AtomicInteger indiceHermano = new AtomicInteger();
+//                    boolean prestamo = buscarHermano(nodoEliminar, indiceHermano);
+//                    restaurar(nodoEliminar.getPadre(), prestamo, indiceHermano);
+//                }
+//            }
         }
         return nodo;
     }
-
-    private void eliminarNodoSupresion(NodoB nodo, Integer clave, AtomicInteger indice) {
+    
+    private void verificarRestaurar(NodoB nodo) {
+        if (nodo != this.getRaiz()) {
+            if (nodo.underKeys()) {
+                AtomicInteger indiceActual = new AtomicInteger();
+                AtomicInteger indiceHermano = new AtomicInteger();
+                boolean prestamo = buscarHermano(nodo, indiceActual, indiceHermano);
+                if (prestamo == true) {
+                    prestarNodos(nodo, indiceActual.get(), indiceHermano.get());
+                } else {
+                    unirNodos(nodo, indiceActual.get());
+                }
+            }
+        }
+    }
+    
+    private void prestarNodos(NodoB nodoActual, int i, int j) {
+        NodoB padre = nodoActual.getPadre();
+        NodoB hermano;
+        NodoB temp;
+        if (i < j) { //desplazamiento de IZQ a DER
+            temp = padre.getHijoEn(i);
+            hermano = padre.getHijoEn(i + 1);
+            while (j > i) {
+                //Copiamos el valor del padre y aumentamos 1 en el nodo
+                temp.setClaveEn(temp.getCantClaves() + 1, padre.getClaveEn(i + 1));
+                temp.setCantClaves(temp.getCantClaves() + 1);
+                //Copiamos el valor del hijo derecho al padre
+                padre.setClaveEn(i + 1, hermano.getClaveEn(1));
+                //Movemos las claves del hermano dejandolo con una clave menos
+                for (int k = 1; k <= hermano.getCantClaves(); k++) {
+                    hermano.setClaveEn(k, hermano.getClaveEn(k + 1));
+                }
+                hermano.setCantClaves(hermano.getCantClaves() - 1);
+                //Actualizamos los nuevos nodos
+                temp = padre.getHijoEn(++i);
+                hermano = padre.getHijoEn(i + 1);
+            }
+        } else { //i > j desplazamiento de DER a IZQ
+            hermano = padre.getHijoEn(j);
+            temp = padre.getHijoEn(j + 1);
+            while (j < i) {
+                //Movemos las claves del nodo dejandolo con un espacio
+                for (int k = temp.getCantClaves(); k >= 1; k--) {
+                    temp.setClaveEn(k + 1, temp.getClaveEn(k));
+                }
+                //Copiamos la clave del padre y aumentamos su cantidad en 1
+                temp.setClaveEn(1, padre.getClaveEn(j + 1));
+                temp.setCantClaves(temp.getCantClaves() + 1);
+                //Copiamos el valor del hijo izquierdo al padre
+                padre.setClaveEn(j + 1, hermano.getClaveEn(hermano.getCantClaves()));
+                //Eliminamos una clave en el hermano de forma logica y su cantidad
+                hermano.setClaveEn(hermano.getCantClaves(), null);
+                hermano.setCantClaves(hermano.getCantClaves() - 1);
+                //Actualizamos los nuevos nodos
+                hermano = padre.getHijoEn(++j);
+                temp = padre.getHijoEn(j + 1);
+            }
+        }
+    }
+    
+    private void unirNodos(NodoB nodo, int i) {
+        NodoB padre = nodo.getPadre();
+        NodoB hermano;
+        int j; //indice del hermano
+        int k; //indice de la clave del padre
+        if (i < padre.getCantClaves()) { //El nodo esta a la izquierda respecto su nodo hermano al cual se va a unir
+            j = i + 1;
+            k = j;
+            hermano = padre.getHijoEn(j);
+            //copiar clave del padre en el nodo
+            nodo.setClaveEn(nodo.getCantClaves() + 1, padre.getClaveEn(k));
+            nodo.setCantClaves(nodo.getCantClaves() + 1);
+            //copiamos la claves del hermano en el nodo
+            for (int j2 = 1; j2 <= hermano.getCantClaves(); j2++) {
+                nodo.setClaveEn(nodo.getCantClaves() + 1, hermano.getClaveEn(j2));
+                nodo.setCantClaves(nodo.getCantClaves() + 1);
+            }
+            //despejamos el nodo hermano
+            hermano.setPadre(null);
+            //hermano.free()//no existe jaja-
+            //reordenamos las claves e hijos del padre
+            int k2;
+            for (k2 = k; k2 < padre.getCantClaves(); k2++) {
+                padre.setClaveEn(k2, padre.getClaveEn(k2 + 1));
+                padre.setHijoEn(k2, padre.getHijoEn(k2 + 1));
+            }
+            //liberamos esa clave, el hijo y seteamos su cantidad de claves en una menos
+            padre.setClaveEn(k2, null);
+            padre.setHijoEn(k2, null);
+            padre.setCantClaves(padre.getCantClaves()-1);
+        } else { //El nodo esta a la derecha respecto su nodo hermano al cual se va a unir
+            j = i - 1;
+            k = i;
+            hermano = padre.getHijoEn(j);
+            //dejamos espacio en el nodo para 1 clave padre y M/2 claves del nodo hermano
+            for(int l=1; l<=nodo.getCantClaves(); l++){
+                nodo.setClaveEn(l+((nodo.getM()/2)+1), nodo.getClaveEn(l));
+            }
+            //copiar clave del padre en el nodo
+            nodo.setClaveEn(nodo.getCantClaves()+(nodo.getM()/2), padre.getClaveEn(k));
+            nodo.setCantClaves(nodo.getCantClaves() + 1);
+            //copiamos la claves del hermano en el nodo
+            for (int j2 = 1; j2 <= hermano.getCantClaves(); j2++) {
+                nodo.setClaveEn(j2, hermano.getClaveEn(j2));
+                nodo.setCantClaves(nodo.getCantClaves() + 1);
+            }
+            //despejamos el nodo hermano
+            hermano.setPadre(null);
+            //hermano.free()//no existe jaja-
+            //reordenamos las claves e hijos del padre
+            padre.setHijoEn(k-1, padre.getHijoEn(k));
+            //liberamos esa clave, el hijo y seteamos su cantidad de claves en una menos
+            padre.setClaveEn(k, null);
+            padre.setHijoEn(k, null);
+            padre.setCantClaves(padre.getCantClaves()-1);
+        }
+        nodo = padre;
+        verificarRestaurar(nodo); //se ve que el padre tambien este bien
+    }
+    
+    private NodoB eliminarNodoSupresion(NodoB nodo, AtomicInteger indice) {
         for (int i = indice.get(); i <= nodo.getCantClaves(); i++) {
             nodo.setClaveEn(i, nodo.getClaveEn(i + 1));
             nodo.setHijoEn(i, nodo.getHijoEn(i + 1));
         }
         nodo.setCantClaves(nodo.getCantClaves() - 1);
+        return nodo;
     }
-
-    private void restaurar(NodoB padre, boolean prestamo, AtomicInteger indiceHermano) {
-        if (prestamo) {
-            //desdeIzq()
-            //desdeDer()
-        } else {
-            //UNIR
-//            merge();
-            if (padre.getCantClaves() < padre.getM() / 2) {
-                AtomicInteger indiceHermano2 = new AtomicInteger();
-                boolean prestamo2 = buscarHermano(padre, indiceHermano2);
-                restaurar(padre.getPadre(), prestamo2, indiceHermano2);
-            }
-
-        }
-    }
-
-    private boolean buscarHermano(NodoB nodo, AtomicInteger index) {
+    
+    private boolean buscarHermano(NodoB nodo, AtomicInteger indAct, AtomicInteger indHer) {
         boolean existeNodo = false;
+        indHer.set(-1);
+        indAct.set(-1);
         NodoB padre = nodo.getPadre();
-        for (int i = 0; i < padre.getCantClaves() && existeNodo == false; i++) {
-            if (padre.getHijoEn(i).getCantClaves() > padre.getM() / 2) {
+        for (int i = 0; i <= padre.getCantClaves(); i++) {
+            if (padre.getHijoEn(i).getCantClaves() < (padre.getM() / 2)) {
+                indAct.set(i);
+            }
+            if (padre.getHijoEn(i).getCantClaves() > (padre.getM() / 2)) {
                 existeNodo = true;
-                index.set(i);
+                indHer.set(i);
             }
         }
         return existeNodo;
     }
-
+    
     private int buscarMayorMenor(NodoB nodo, Integer clave, AtomicInteger indice) {
         //UNO A LA IZQUIERDA
         NodoB izquierda = nodo.getHijoEn(indice.get() - 1);
@@ -270,7 +391,7 @@ public class ArbolB extends ArbolM {
         }
         return izquierda.getClaveEn(izquierda.getCantClaves());
     }
-
+    
     private int buscarMenorMayor(NodoB nodo, Integer clave, AtomicInteger indice) {
         //UNO A LA DERECHA
         NodoB derecha = nodo.getHijoEn(indice.get());
@@ -289,61 +410,6 @@ public class ArbolB extends ArbolM {
                 hijo.setPadre(nodo);
                 actualizarPadres(hijo); // Llamada recursiva para el siguiente nivel del árbol
             }
-        }
-    }
-
-    // Java Code
-    // Deletes value from the node
-    public NodoB del(int val, NodoB root) {
-        NodoB temp;
-        if (!delhelp(val, root)) {
-            System.out.println(
-                    String.format("Value %d not found.", val));
-        } else {
-            if (root.count == 0) {
-                temp = root;
-                root = root.child[0];
-                temp = null;
-            }
-        }
-        return root;
-    }
-
-    // GFG
-// Java Code
-// Helper function for del()
-    public boolean delhelp(int val, NodoB root) {
-        AtomicInteger i = new AtomicInteger();
-        boolean flag;
-        if (root == null) {
-            return 0;
-        } else {
-            // Again searches for the node
-            flag = searchnode(val, root, i);
-            // if flag is true
-            if (flag) {
-                if (root.getHijoEn(i.get()-1) == null) {
-                    clear(root, i);
-                } else {
-                    copysucc(root, i);
-                    // delhelp() is called recursively
-                    flag = delhelp(root.value[i], root.child[i]);
-                    if (flag == 0) {
-                        System.out.println(
-                                String.format("Value %d not found.",
-                                        root.value[i]));
-                    }
-                }
-            } else {
-                // Recursion
-                flag = delhelp(val, root.getHijoEn(i.get()));
-            }
-            if (root.child[i] != null) {
-                if (root.child[i].count < MIN) {
-                    restore(root, i);
-                }
-            }
-            return flag;
         }
     }
 
@@ -371,11 +437,11 @@ public class ArbolB extends ArbolM {
         pos.set(index);
         return encontrado;
     }
-
+    
     public NodoB buscarNodo(Integer clave, AtomicInteger pos) {
         return buscarNodo(this.getRaiz(), clave, pos);
     }
-
+    
     private NodoB buscarNodo(NodoB nodoActual, Integer clave, AtomicInteger pos) {
         if (nodoActual == null) {
             return null;
@@ -388,23 +454,5 @@ public class ArbolB extends ArbolM {
             }
         }
     }
-
-    public boolean searchnode(Integer val, NodoB n, AtomicInteger pos) {
-        // if val is less than node.value[1]
-        if (val < n.getClaveEn(1)) {
-            pos.set(0);
-            return false;
-        } // if the val is greater
-        else {
-            pos.set(n.getCantClaves());
-
-            // check in the child array
-            // for correct position
-            while ((val < n.getClaveEn(pos.get())) && pos.get() > 1) {
-                pos.set(pos.get()-1);
-            }
-
-            return Objects.equals(val, n.getClaveEn(pos.get()));
-        }
-    }
+    
 }
