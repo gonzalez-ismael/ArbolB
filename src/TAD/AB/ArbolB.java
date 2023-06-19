@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Esta clase hereda de ArbolM y representa un ArbolB de orden M. Esta clase tiene 3 Métodos públicos: Insertar, Eliminar y Buscar.
  *
- * @author Ismael
+ * @author GONZALEZ ESPADA, José Ismael
  */
 public class ArbolB extends ArbolM {
 

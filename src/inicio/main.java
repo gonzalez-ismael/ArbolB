@@ -4,7 +4,7 @@ import TAD.AB.ArbolB;
 
 /**
  *
- * @author Ismael
+ * @author GONZALEZ ESPADA, José Ismael
  */
 public class main {
 

@@ -5,7 +5,7 @@ package TAD.AB;
  * Esta clase nace como solución al uso de punteros en C++. Dado que el uso de multiples variables que apuntan a otras permiten que "retornen" mas de 1 solo valor.
  * En java solo se puede retornar un unico valor, entonces hare que se retorne un arreglo con todos los valores que usan los punteros en C++.
  * 
- * @author Ismael
+ * @author GONZALEZ ESPADA, José Ismael
  */
 public class ContAux {
 

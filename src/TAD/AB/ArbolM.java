@@ -3,7 +3,7 @@ package TAD.AB;
 /**
  * Esta clase representa la estructura basica de un Arbol Multicamino.
  *
- * @author Ismael
+ * @author GONZALEZ ESPADA, José Ismael
  */
 public class ArbolM {
 

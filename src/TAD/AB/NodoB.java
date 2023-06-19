@@ -3,7 +3,7 @@ package TAD.AB;
 /**
  * Esta clase representa un Nodo de un Arbol Multicamino de Busqueda.
  *
- * @author Ismael Gonzalez
+ * @author GONZALEZ ESPADA, José Ismael
  */
 public class NodoB {
 
