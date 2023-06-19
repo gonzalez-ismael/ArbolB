@@ -78,6 +78,15 @@ public class NodoB {
     }
 
     /**
+     * Método que devuelve si un nodo no contiene claves.
+     *
+     * @return boolean - devuelve "VERDADERO" si no contiene claves, caso contrario devuelve "FALSO".
+     */
+    public boolean estaVacio() {
+        return (this.getCantClaves() == 0);
+    }
+
+    /**
      * Método para mostrar las claves de un nodo. El nodo empieza en 1 porque se omite la primera posición.
      */
     public void mostrarClaves() {

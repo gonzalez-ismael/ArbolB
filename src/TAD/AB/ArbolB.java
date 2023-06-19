@@ -37,9 +37,10 @@ public class ArbolB extends ArbolM {
     /**
      * Metodo privado para crear una nueva raíz si la propagación, hacia arriba, del proceso de división llega a la actual raíz (el árbol aumenta su altura).
      *
-     * @param raiz es la raiz actual del árbol.
+     * @param raiz es la clave a ingresar en el árbol.
      * @param clave es la clave a ingresar en el árbol.
      * @return NodoB - es la nueva raiz.
+     * @throws ClaveDuplicadaExcepcion - es una excepcion en caso de que se intente ingresar una clave que ya exista en el árbol.
      */
     private NodoB insertar(NodoB raiz, Integer clave) throws ClaveDuplicadaExcepcion {
         boolean subeArriba;
@@ -76,7 +77,7 @@ public class ArbolB extends ArbolM {
      * @param mediana la mediana es la clave que se encuentra en la mitad del nodo (M/2).
      * @param nuevoDerecho es el nuevo hijo derecho del nodo actual.
      * @return ContAux - devuelve un arreglo que contiene un booleano "subeArriba", un int "mediana" y un NodoB "nodoDerecha".
-     * @throws ClaveDuplicadaExcepcion - es una excepcion en caso de que se intente ingresar una clave que ya este en el árbol.
+     * @throws ClaveDuplicadaExcepcion - es una excepcion en caso de que se intente ingresar una clave que ya exista en el árbol.
      */
     private ContAux empujar(NodoB nodoActual, Integer clave, Integer mediana, NodoB nuevoDerecho) throws ClaveDuplicadaExcepcion {
         boolean subeArriba = false;
@@ -86,7 +87,7 @@ public class ArbolB extends ArbolM {
             subeArriba = true;
             mediana = clave;
             nuevoDerecho = null;
-            
+
             arregloAux.setSubeArriba(subeArriba);
             arregloAux.setMediana(mediana);
             arregloAux.setNd(nuevoDerecho);
@@ -106,7 +107,7 @@ public class ArbolB extends ArbolM {
             nuevoDerecho = arregloAux.getNd();
             // devuelve control; vuelve por el camino de búsqueda
             ContAux arregloAux2;
-            
+
             if (subeArriba) {
                 if (!nodoActual.estaLleno()) {
                     subeArriba = false;
@@ -187,7 +188,12 @@ public class ArbolB extends ArbolM {
         // incrementa el contador de claves almacenadas
         nodoActual.setCantClaves(nodoActual.getCantClaves() + 1);
     }
-    
+
+    /**
+     * Método público para eliminar una clave.
+     *
+     * @param clave es la clave a eliminar en el árbol.
+     */
     public void eliminar(Integer clave) {
         try {
             this.setRaiz(eliminar(this.getRaiz(), clave));
@@ -196,7 +202,15 @@ public class ArbolB extends ArbolM {
             System.out.println(ex.toString());
         }
     }
-    
+
+    /**
+     * Método privado para analizar el caso de eliminación y ejecutar el procedimiento correcto. Primero busca el nodo de la clave a eliminar. En caso de que no exista, se llama a la excepcion: ClaveInexistenteExcepcion. En caso de que exista, se analiza si es un nodo hoja o un nodo interno. Si es hoja se elimina directamente la clave. En caso de ser un nodo interno, se reemplazar por el Maximo menor, o el Minimo mayor, y se procede a eliminar la clave sustituta del nodo hoja al cual pertenece. Por ultimo se verifica si el nodo del cual se elimino la clave sigue contiendo la cantindad minima de claves. Sino se reestructura el árbol.
+     *
+     * @param nodo es el nodo donde se busca la clave y se analiza el caso de eliminación.
+     * @param clave es la clave a eliminar.
+     * @return NodoB - es el nodo que contiene los cambios de la eliminación.
+     * @throws ClaveInexistenteExcepcion - es una excepcion en caso de que se intente eliminar una clave que no exista en el árbol.
+     */
     private NodoB eliminar(NodoB nodo, Integer clave) throws ClaveInexistenteExcepcion {
         if (nodo != null) {
             AtomicInteger indexClave = new AtomicInteger();
@@ -204,40 +218,31 @@ public class ArbolB extends ArbolM {
             if (nodoEliminar == null) {
                 throw new ClaveInexistenteExcepcion("Clave Inexistente");
             }
-            
             if (nodoEliminar.esHoja()) {
-                nodoEliminar = eliminarNodoSupresion(nodoEliminar, indexClave);
+                nodoEliminar = eliminarClaveNodoHoja(nodoEliminar, indexClave);
             } else {
-                Integer claveSustituta = buscarMayorMenor(nodoEliminar, clave, indexClave);
-//                Integer claveSustituta = buscarMenorMayor(nodoEliminar,clave,auxIndice);
+                Integer claveSustituta = buscarMayorMenores(nodoEliminar, indexClave);
+//                Integer claveSustituta = buscarMenorMayores(nodoEliminar, indexClave);
                 nodoEliminar.setClaveEn(indexClave.get(), claveSustituta);
                 eliminar(nodoEliminar.getHijoEn(indexClave.get() - 1), claveSustituta);
             }
-            
-            verificarRestaurar(nodoEliminar);
-
-//            if (!nodoEliminar.esHoja()) {   //NODO INTERNO
-//                Integer claveSustituta = buscarMayorMenor(nodoEliminar, clave, indexClave);
-////                Integer claveSustituta = buscarMenorMayor(nodoEliminar,clave,auxIndice);
-////                System.out.println("clave: "+claveSustituta);
-//                nodoEliminar.setClaveEn(indexClave.get(), claveSustituta);
-//                eliminar(nodoEliminar.getHijoEn(indexClave.get() - 1), claveSustituta);
-//            } else {                               //NODO HOJA
-//                if (nodoEliminar.getCantClaves() > nodoEliminar.getM() / 2) { //Nodo con mas de M/2 claves
-//                    eliminarNodoSupresion(nodoEliminar, indexClave);
-//                } else { //NODO CON M/2 claves
-//                    eliminarNodoSupresion(nodoEliminar, indexClave);
-//                    AtomicInteger indiceHermano = new AtomicInteger();
-//                    boolean prestamo = buscarHermano(nodoEliminar, indiceHermano);
-//                    restaurar(nodoEliminar.getPadre(), prestamo, indiceHermano);
-//                }
-//            }
+            nodo = verificarRestaurar(nodoEliminar);
         }
         return nodo;
     }
-    
-    private void verificarRestaurar(NodoB nodo) {
-        if (nodo != this.getRaiz()) {
+
+    /**
+     * Este método verifica la cantidad de claves en el nodo para garantizar la consistencia del árbol B. Si se trata de la raiz, se verifica que no este vacia, porque de estarlo significa que se ha producido una union que llevo a que este nodo preste su unica clave quedando vacio. Y reemplazando este nodo raiz por su hijo izquierdo que sera la nueva raiz. Si es un nodo distinto de la raiz, se verifica si contine el mínimo de claves necesarias con underKeys(). Si necesita más claves, se analiza se existe algun hermano capaz de prestarle una y realizar un "Prestamo", caso contrario se realizara una "Union" entre su hermano proximo y una clave del padre.
+     *
+     * @param nodo es el nodo a analizar y restaurar en caso de ser necesario.
+     * @return NodoB - es la nueva raiz con los cambios realizados (solo se modifica si se produce una "Union" y el nodo padre tenia una unica clave para prestar).
+     */
+    private NodoB verificarRestaurar(NodoB nodo) {
+        if (nodo == this.getRaiz()) {
+            if (nodo.estaVacio()) {
+                return nodo.getHijoEn(0);
+            }
+        } else {
             if (nodo.underKeys()) {
                 AtomicInteger indiceActual = new AtomicInteger();
                 AtomicInteger indiceHermano = new AtomicInteger();
@@ -245,49 +250,66 @@ public class ArbolB extends ArbolM {
                 if (prestamo == true) {
                     prestarNodos(nodo, indiceActual.get(), indiceHermano.get());
                 } else {
-                    unirNodos(nodo, indiceActual.get());
+                    return unirNodos(nodo, indiceActual.get());
                 }
             }
         }
+        return this.getRaiz();
     }
-    
+
+    /**
+     * Este método transfiere una clave desde el nodo hermano en la posicion j hasta el nodo actual en la posicion i. Se analiza el valor de los indices para saber si el desplazamiento es de "Derecha a Izquierda" o de "Izquierda a Derecha". Si el desplazamiento es de "Derecha a Izquierda" se copia el valor del padre, luego se copia la clave del hijo derecho al padre, se mueve el primer hijo del hermano hacia el ultimo lugar del nodo, se reacomodan las claves y los hijos en el nodo derecho y por último se procede a repetir el proceso hasta llegar al nodo que va a prestar la clave (en caso de que los hermanos sean continuos). Si el desplazamiento es de "Izquierda a Derecha" movemos las claves y los hijos del nodo dejandolo con un espacio para otra clave y otro hijo al inicio de ambos arreglos, copiamos la clave del padre al nodo, copiamos la clave del nodo izquierdo al padre, movemos el ultimo hijo del nodo izquierdo hacia el primer lugar del nodo derecho, eliminamos las claves y los hijos desplazados, actualizamos los nodos y por último se procede a repetir el proceso hasta llegar al nodo que va a prestar la clave (en caso de que los hermanos sean continuos).
+     *
+     * @param nodoActual es el nodo actual, el cual tiene menos del mínimo de claves permitido.
+     * @param i es el indice del nodo actual en el arreglo de hijos del nodo padre.
+     * @param j es el indice del nodo hermano, el cual le va a prestar una clave al nodo actual, en el arreglo de hijos del nodo padre.
+     */
     private void prestarNodos(NodoB nodoActual, int i, int j) {
         NodoB padre = nodoActual.getPadre();
         NodoB hermano;
         NodoB temp;
-        if (i < j) { //desplazamiento de IZQ a DER
+        if (i < j) { //desplazamiento de DER A IZQ
             temp = padre.getHijoEn(i);
             hermano = padre.getHijoEn(i + 1);
-            while (j > i) {
-                //Copiamos el valor del padre y aumentamos 1 en el nodo
+            while (i < j) {
+                //Copiamos el valor del padre y aumentamos en +1 en el nodo actual
                 temp.setClaveEn(temp.getCantClaves() + 1, padre.getClaveEn(i + 1));
                 temp.setCantClaves(temp.getCantClaves() + 1);
-                //Copiamos el valor del hijo derecho al padre
+                //Copiamos el valor de la clave del hijo derecho al padre
                 padre.setClaveEn(i + 1, hermano.getClaveEn(1));
+                //Movemos el primer hijo del hermano hacia el ultimo lugar del nodo temporal
+                temp.setHijoEn(temp.getCantClaves(), hermano.getHijoEn(0));
                 //Movemos las claves del hermano dejandolo con una clave menos
-                for (int k = 1; k <= hermano.getCantClaves(); k++) {
+                int k;
+                for (k = 1; k <= hermano.getCantClaves(); k++) {
                     hermano.setClaveEn(k, hermano.getClaveEn(k + 1));
+                    hermano.setHijoEn(k - 1, hermano.getHijoEn(k));
                 }
+                hermano.setHijoEn(k - 1, null);
                 hermano.setCantClaves(hermano.getCantClaves() - 1);
                 //Actualizamos los nuevos nodos
                 temp = padre.getHijoEn(++i);
                 hermano = padre.getHijoEn(i + 1);
             }
-        } else { //i > j desplazamiento de DER a IZQ
+        } else { //i > j desplazamiento de IZQ a DER
             hermano = padre.getHijoEn(j);
             temp = padre.getHijoEn(j + 1);
             while (j < i) {
-                //Movemos las claves del nodo dejandolo con un espacio
+                //Movemos las claves y los hijos del nodo dejandolo con un espacio
                 for (int k = temp.getCantClaves(); k >= 1; k--) {
                     temp.setClaveEn(k + 1, temp.getClaveEn(k));
+                    temp.setHijoEn(k, temp.getHijoEn(k - 1));
                 }
                 //Copiamos la clave del padre y aumentamos su cantidad en 1
                 temp.setClaveEn(1, padre.getClaveEn(j + 1));
                 temp.setCantClaves(temp.getCantClaves() + 1);
                 //Copiamos el valor del hijo izquierdo al padre
                 padre.setClaveEn(j + 1, hermano.getClaveEn(hermano.getCantClaves()));
-                //Eliminamos una clave en el hermano de forma logica y su cantidad
+                //Movemos el ultimo hijo del hermano hacia el primer lugar del nodo temporal
+                temp.setHijoEn(0, hermano.getHijoEn(hermano.getCantClaves()));
+                //Eliminamos una clave y un hijo en el hermano de forma logica y su cantidad
                 hermano.setClaveEn(hermano.getCantClaves(), null);
+                hermano.setHijoEn(hermano.getCantClaves(), null);
                 hermano.setCantClaves(hermano.getCantClaves() - 1);
                 //Actualizamos los nuevos nodos
                 hermano = padre.getHijoEn(++j);
@@ -295,8 +317,15 @@ public class ArbolB extends ArbolM {
             }
         }
     }
-    
-    private void unirNodos(NodoB nodo, int i) {
+
+    /**
+     * Este método une un nodo con una clave del nodo padre y el nodo de su hermano mas proximo. En primer lugar se analiza si el indice del nodo es menor al ultimo nodo (para saber de que lado estara el hermano al cual se va a unir).
+     *
+     * @param nodo es el nodo que contiene menos del mínimo de claves permitido.
+     * @param i es el indice del nodo en el arreglo de claves del padre.
+     * @return NodoB - es la posible nueva raiz en caso de una reestructuracion que alcanzo la cima del árbol.
+     */
+    private NodoB unirNodos(NodoB nodo, int i) {
         NodoB padre = nodo.getPadre();
         NodoB hermano;
         int j; //indice del hermano
@@ -311,8 +340,10 @@ public class ArbolB extends ArbolM {
             //copiamos la claves del hermano en el nodo
             for (int j2 = 1; j2 <= hermano.getCantClaves(); j2++) {
                 nodo.setClaveEn(nodo.getCantClaves() + 1, hermano.getClaveEn(j2));
+                nodo.setHijoEn(nodo.getCantClaves(), hermano.getHijoEn(j2 - 1));
                 nodo.setCantClaves(nodo.getCantClaves() + 1);
             }
+            nodo.setHijoEn(nodo.getCantClaves(), hermano.getHijoEn(hermano.getCantClaves()));
             //despejamos el nodo hermano
             hermano.setPadre(null);
             //hermano.free()//no existe jaja-
@@ -325,38 +356,51 @@ public class ArbolB extends ArbolM {
             //liberamos esa clave, el hijo y seteamos su cantidad de claves en una menos
             padre.setClaveEn(k2, null);
             padre.setHijoEn(k2, null);
-            padre.setCantClaves(padre.getCantClaves()-1);
+            padre.setCantClaves(padre.getCantClaves() - 1);
         } else { //El nodo esta a la derecha respecto su nodo hermano al cual se va a unir
             j = i - 1;
             k = i;
             hermano = padre.getHijoEn(j);
             //dejamos espacio en el nodo para 1 clave padre y M/2 claves del nodo hermano
-            for(int l=1; l<=nodo.getCantClaves(); l++){
-                nodo.setClaveEn(l+((nodo.getM()/2)+1), nodo.getClaveEn(l));
+            int l;
+            for (l = 1; l <= nodo.getCantClaves(); l++) {
+                nodo.setClaveEn(l + ((nodo.getM() / 2) + 1), nodo.getClaveEn(l));
+                nodo.setHijoEn(l + ((nodo.getM() / 2) + 1), nodo.getHijoEn(l - 1));
             }
+            nodo.setHijoEn(l + ((nodo.getM() / 2)), nodo.getHijoEn(l - 1));
             //copiar clave del padre en el nodo
-            nodo.setClaveEn(nodo.getCantClaves()+(nodo.getM()/2), padre.getClaveEn(k));
+            nodo.setClaveEn(l + (nodo.getM() / 2), padre.getClaveEn(k));
             nodo.setCantClaves(nodo.getCantClaves() + 1);
             //copiamos la claves del hermano en el nodo
             for (int j2 = 1; j2 <= hermano.getCantClaves(); j2++) {
                 nodo.setClaveEn(j2, hermano.getClaveEn(j2));
+                nodo.setHijoEn(j2 - 1, hermano.getHijoEn(j2 - 1));
                 nodo.setCantClaves(nodo.getCantClaves() + 1);
             }
+            nodo.setHijoEn(hermano.getCantClaves(), hermano.getHijoEn(hermano.getCantClaves()));
             //despejamos el nodo hermano
             hermano.setPadre(null);
             //hermano.free()//no existe jaja-
             //reordenamos las claves e hijos del padre
-            padre.setHijoEn(k-1, padre.getHijoEn(k));
+            padre.setHijoEn(k - 1, padre.getHijoEn(k));
             //liberamos esa clave, el hijo y seteamos su cantidad de claves en una menos
             padre.setClaveEn(k, null);
             padre.setHijoEn(k, null);
-            padre.setCantClaves(padre.getCantClaves()-1);
+            padre.setCantClaves(padre.getCantClaves() - 1);
         }
         nodo = padre;
-        verificarRestaurar(nodo); //se ve que el padre tambien este bien
+        NodoB raiz = verificarRestaurar(nodo); //se ve que el padre tambien este bien
+        return raiz;
     }
-    
-    private NodoB eliminarNodoSupresion(NodoB nodo, AtomicInteger indice) {
+
+    /**
+     * Este método es el que efectua la eliminacion de la clave en los nodos hojas de un árbol.
+     *
+     * @param nodo es el nodo del cual se va a eliminar la clave.
+     * @param indice es el indice de la clave la cual se va a eliminar.
+     * @return NodoB - es el nodo sin la clave ingresada.
+     */
+    private NodoB eliminarClaveNodoHoja(NodoB nodo, AtomicInteger indice) {
         for (int i = indice.get(); i <= nodo.getCantClaves(); i++) {
             nodo.setClaveEn(i, nodo.getClaveEn(i + 1));
             nodo.setHijoEn(i, nodo.getHijoEn(i + 1));
@@ -364,7 +408,15 @@ public class ArbolB extends ArbolM {
         nodo.setCantClaves(nodo.getCantClaves() - 1);
         return nodo;
     }
-    
+
+    /**
+     * Este método se utiliza para saber si es posible realizar el "Prestamo" de una clave de un nodo hermano, se encarga de buscar entre todos los hermanos alguno que contenga más del minimo de claves permitidas.
+     *
+     * @param nodo es el nodo que contiene menos del mínimo de claves permitido.
+     * @param indAct retorna el indice del nodo actual en el arreglo de hijos del padre.
+     * @param indHer retorna el indice del posible nodo hermano en el arreglo de hijos del padre. Sino retorna "-1".
+     * @return boolean - devuelve "VERDADERO" si existe al menos 1 hermano con más del minimo de claves permitido, caso contrario retorna "FALSO".
+     */
     private boolean buscarHermano(NodoB nodo, AtomicInteger indAct, AtomicInteger indHer) {
         boolean existeNodo = false;
         indHer.set(-1);
@@ -381,8 +433,15 @@ public class ArbolB extends ArbolM {
         }
         return existeNodo;
     }
-    
-    private int buscarMayorMenor(NodoB nodo, Integer clave, AtomicInteger indice) {
+
+    /**
+     * Este método busca la clave mayor entre todas las claves menores. Tambien se puede interpretar como el valor máximo del subarbol izquierdo.
+     *
+     * @param nodo es el nodo desde el cual se empieza la busqueda.
+     * @param indice es la posicion de la clave en el nodo.
+     * @return int - retorna el valor de la clave encontrada.
+     */
+    private int buscarMayorMenores(NodoB nodo, AtomicInteger indice) {
         //UNO A LA IZQUIERDA
         NodoB izquierda = nodo.getHijoEn(indice.get() - 1);
         //FULL DERECHA
@@ -391,8 +450,15 @@ public class ArbolB extends ArbolM {
         }
         return izquierda.getClaveEn(izquierda.getCantClaves());
     }
-    
-    private int buscarMenorMayor(NodoB nodo, Integer clave, AtomicInteger indice) {
+
+    /**
+     * Este método busca la clave menor entre todas las claves mayores. Tambien se puede interpretar como el valor mínimo del subarbol derecho.
+     *
+     * @param nodo es el nodo desde el cual se empieza la busqueda.
+     * @param indice es la posicion de la clave en el nodo.
+     * @return int - retorna el valor de la clave encontrada.
+     */
+    private int buscarMenorMayores(NodoB nodo, AtomicInteger indice) {
         //UNO A LA DERECHA
         NodoB derecha = nodo.getHijoEn(indice.get());
         //FULL IZQUIERDA
@@ -402,13 +468,19 @@ public class ArbolB extends ArbolM {
         return derecha.getClaveEn(1);
     }
 
-    //Actualizar el padre de cada hijo del nodo actual
-    public void actualizarPadres(NodoB nodo) {
-        for (int i = 0; i < nodo.getCantClaves() + 1; i++) {
-            NodoB hijo = nodo.getHijoEn(i);
-            if (hijo != null) {
-                hijo.setPadre(nodo);
-                actualizarPadres(hijo); // Llamada recursiva para el siguiente nivel del árbol
+    /**
+     * Este método se encarga de actualizar todos los padres del árbol.
+     *
+     * @param nodo es el nodo desde el cual se van a actualiar los padres.
+     */
+    private void actualizarPadres(NodoB nodo) {
+        if (nodo != null) {
+            for (int i = 0; i < nodo.getCantClaves() + 1; i++) {
+                NodoB hijo = nodo.getHijoEn(i);
+                if (hijo != null) {
+                    hijo.setPadre(nodo);
+                    actualizarPadres(hijo); // Llamada recursiva para el siguiente nivel del árbol
+                }
             }
         }
     }
@@ -437,11 +509,26 @@ public class ArbolB extends ArbolM {
         pos.set(index);
         return encontrado;
     }
-    
+
+    /**
+     * Este método público se encarga de llamar el metodo recursivo buscar nodo, y retorna el nodo de una clave buscada.
+     *
+     * @param clave es la clave buscada en los nodos.
+     * @param pos es la posicion de esa clave.
+     * @return NodoB - es el nodo buscado. Sera "null" en caso de que no se encuentre.
+     */
     public NodoB buscarNodo(Integer clave, AtomicInteger pos) {
         return buscarNodo(this.getRaiz(), clave, pos);
     }
-    
+
+    /**
+     * Este método busca una clave y retorna su nodo.
+     *
+     * @param nodoActual es el nodo desde el cual se esta buscando.
+     * @param clave es la clave buscada en los nodos.
+     * @param pos es la posicion de esa clave.
+     * @return NodoB - es el nodo buscado. Sera "null" en caso de que no se encuentre.
+     */
     private NodoB buscarNodo(NodoB nodoActual, Integer clave, AtomicInteger pos) {
         if (nodoActual == null) {
             return null;
@@ -454,5 +541,4 @@ public class ArbolB extends ArbolM {
             }
         }
     }
-    
 }

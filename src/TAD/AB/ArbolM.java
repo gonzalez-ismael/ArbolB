@@ -17,7 +17,7 @@ public class ArbolM {
 
     /**
      * Constructor desarrollado para crear un arbol vacio de orden m.
-     * 
+     *
      * @param m es la dimension del arbol, la cantidad de ramas/hijos que tiene.
      */
     public ArbolM(int m) {
@@ -27,6 +27,7 @@ public class ArbolM {
 
     /**
      * Método público que retorna la altura de un árbol.
+     *
      * @return int - devuelve la altura como un número natural igual o mayor a 0.
      */
     public int altura() {
@@ -35,6 +36,7 @@ public class ArbolM {
 
     /**
      * Método privado que retorna la altura de un árbol.
+     *
      * @param r es la raíz del árbol.
      * @return int - devuelve la altura del árbol.
      */
@@ -59,14 +61,19 @@ public class ArbolM {
      * Método público para mostrar las claves del nodo por nivel - Amplitud.
      */
     public void mostrarAmplitud() {
-        for (int i = 0; i < altura(); i++) {
-            System.out.println("NIVEL " + i + " - ");
-            recorridoNivel(raiz, i);
+        if (this.getRaiz() != null) {
+            for (int i = 0; i < altura(); i++) {
+                System.out.println("NIVEL " + i + " - ");
+                recorridoNivel(raiz, i);
+            }
+        } else {
+            System.out.println("NO HAY CLAVES PARA MOSTRAR!\n");
         }
     }
 
     /**
      * Método privado recursivo que se utiliza para mostrar las claves del nodo por nivel.
+     *
      * @param r es el nodo actual.
      * @param nivel es el nivel actual.
      */
@@ -86,27 +93,34 @@ public class ArbolM {
 
     /**
      * Método público que muestran las claves en profundidad segun el modo que se use.
+     *
      * @param modo indica si el recorrido será en PREORDEN, ENORDEN o POSTORDEN.
      */
     public void mostrarProfundidad(int modo) {
-        switch (modo) {
-            case ArbolM.PREORDEN:
-                recorridoPreorden(this.getRaiz());
-                break;
-            case ArbolM.ENORDEN:
-                recorridoEnorden(this.getRaiz());
-                break;
-            case ArbolM.POSTORDEN:
-                recorridoPostorden(this.getRaiz());
-                break;
-            default:
-                System.out.println("Modo Invalido");
-                break;
+        if (this.getRaiz() != null) {
+            switch (modo) {
+                case ArbolM.PREORDEN:
+                    recorridoPreorden(this.getRaiz());
+                    break;
+                case ArbolM.ENORDEN:
+                    recorridoEnorden(this.getRaiz());
+                    break;
+                case ArbolM.POSTORDEN:
+                    recorridoPostorden(this.getRaiz());
+                    break;
+                default:
+                    System.out.println("Modo Invalido");
+                    break;
+            }
+        } else {
+            System.out.println("SIN CLAVES PARA MOSTRAR");
         }
+
     }
 
     /**
      * Método privado recursivo que realiza un recorrido en pre-orden.
+     *
      * @param r es el nodo actual.
      */
     private void recorridoPreorden(NodoB r) {
@@ -127,6 +141,7 @@ public class ArbolM {
 
     /**
      * Método privado recursivo que realiza un recorrido en-orden.
+     *
      * @param r es el nodo actual.
      */
     private void recorridoEnorden(NodoB r) {
@@ -144,6 +159,7 @@ public class ArbolM {
 
     /**
      * Método privado recursivo que realiza un recorrido en post-orden.
+     *
      * @param r es el nodo actual.
      */
     private void recorridoPostorden(NodoB r) {
