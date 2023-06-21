@@ -1,1 +1,0 @@
-typeSearchIndex = [{"l":"All Classes","url":"allclasses-index.html"},{"p":"TAD.AB","l":"ArbolB"},{"p":"TAD.AB","l":"ArbolM"},{"p":"TAD.AB","l":"ContAux"},{"p":"Excepciones","l":"IlegalClaveDuplicada"},{"p":"inicio","l":"main"},{"p":"TAD.AB","l":"NodoB"}]

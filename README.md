@@ -4,5 +4,5 @@ El algoritmo de inserción se extrajo del libro "Estructuras de datos en C++" de
 El algoritmo de eliminación es de mi autoria - Gonzalez Espada, José Ismael.
 
 Lenguaje de Programación: JAVA
-Version JDK 13
-Version Apache NetBeans IDE 11.3
+Version JDK 17.0.6
+Version Apache NetBeans IDE 17
