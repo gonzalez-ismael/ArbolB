@@ -1,4 +1,4 @@
-package TAD.ArbolMulticamino.ArbolB;
+    package TAD.ArbolMulticamino.ArbolB;
 
 import TAD.ArbolMulticamino.ArbolM;
 import TAD.ArbolMulticamino.Nodo;
@@ -163,7 +163,9 @@ public class ArbolB extends ArbolM {
         mediana = nodoActual.getClaveEn(nodoActual.getCantClaves());
         //El primer hijo de la izq del nuevo nodo, es el hijo de la mediana del nodoActual
         nuevoNodo.setHijoEn(0, nodoActual.getHijoEn(nodoActual.getCantClaves()));
-        nodoActual.setHijoEn(nodoActual.getCantClaves(), null);
+        for(i = nodoActual.getCantClaves(); i <= nodoActual.getM(); i++){
+            nodoActual.setHijoEn(i, null);
+        }
         nodoActual.setClaveEn(nodoActual.getCantClaves(), null); //se quita la mediana de forma real
         nodoActual.setCantClaves(nodoActual.getCantClaves() - 1); //se quita la mediana de forma logica
         nuevo = nuevoNodo; //devuelve el nuevo nodo
